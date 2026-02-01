@@ -36,7 +36,7 @@
         {
           "id": "2.1",
           "name": "Create TypeScript types (src/types.ts)",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "2.2",
