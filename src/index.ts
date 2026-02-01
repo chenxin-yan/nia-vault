@@ -37,6 +37,10 @@ const cli = meow(
   Options for 'config'
     --reset           Delete configuration file
 
+  Global Options
+    -h, --help        Show help
+    -v, --version     Show version number
+
   Examples
     $ vault init
     $ vault ask "What are my notes about project planning?"
