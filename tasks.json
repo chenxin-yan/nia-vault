@@ -70,7 +70,7 @@
         {
           "id": "3.1",
           "name": "Implement init command (src/commands/init.ts)",
-          "status": "pending",
+          "status": "completed",
           "notes": "Uses checkbox prompt for folder selection, reads API key from nia-sync"
         },
         {
