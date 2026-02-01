@@ -47,7 +47,7 @@
         {
           "id": "2.3",
           "name": "Implement vault config manager (src/lib/config.ts)",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "2.4",
