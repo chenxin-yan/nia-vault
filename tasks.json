@@ -41,7 +41,7 @@
         {
           "id": "2.2",
           "name": "Implement nia-sync integration (src/lib/nia-sync.ts)",
-          "status": "pending",
+          "status": "completed",
           "notes": "Read API key from ~/.nia-sync/config.json + run `nia once` for sync"
         },
         {
