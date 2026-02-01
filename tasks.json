@@ -132,7 +132,8 @@
         {
           "id": "5.2",
           "name": "Manual testing of all commands",
-          "status": "pending"
+          "status": "completed",
+          "notes": "All commands tested: --help, --version, config, config --reset, init, sync, ask, folders, folders add, folders remove. Error handling verified for missing nia-sync config, missing vault config, and API failures."
         },
         {
           "id": "5.3",
