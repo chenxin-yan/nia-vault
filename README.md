@@ -11,7 +11,8 @@ A CLI application for querying your local notes and files using AI-powered seman
 
 ## Prerequisites
 
-Before using nia-vault, you need to have [nia-sync](https://github.com/nicholasgriffintn/nia-sync) installed and configured:
+- Node.js >= 18.0.0 or Bun
+- [nia-sync](https://github.com/nicholasgriffintn/nia-sync) installed and configured
 
 ```bash
 # Install nia-sync
@@ -28,11 +29,11 @@ nia start
 ## Installation
 
 ```bash
+# With Bun (recommended)
+bun install -g nia-vault
+
 # With npm
 npm install -g nia-vault
-
-# With Bun
-bun install -g nia-vault
 
 # With pnpm
 pnpm install -g nia-vault
@@ -101,11 +102,11 @@ Found 2 results
 
 **Options:**
 
-| Flag | Description |
-|------|-------------|
-| `-f, --folder <id>` | Search specific folder only |
-| `-l, --limit <n>` | Max results (default: 5) |
-| `-s, --sync` | Sync folders before searching |
+| Flag                | Description                   |
+| ------------------- | ----------------------------- |
+| `-f, --folder <id>` | Search specific folder only   |
+| `-l, --limit <n>`   | Max results (default: 5)      |
+| `-s, --sync`        | Sync folders before searching |
 
 ### `vault sync`
 
@@ -177,19 +178,14 @@ This file only stores which folders are included in searches. The API key is alw
 
 ## Troubleshooting
 
-| Error | Solution |
-|-------|----------|
-| `nia-sync not configured` | Run `nia login` to authenticate |
-| `No configuration found` | Run `vault init` to set up |
-| `Invalid API key` | Run `nia login` to re-authenticate |
-| `No synced folders found` | Run `nia add ~/path` to add folders |
-| `No folders selected` | Run `vault folders add` to select folders |
-| `Could not connect to Nia API` | Check your internet connection |
-
-## Requirements
-
-- Node.js >= 18.0.0 or Bun
-- nia-sync installed and configured
+| Error                          | Solution                                  |
+| ------------------------------ | ----------------------------------------- |
+| `nia-sync not configured`      | Run `nia login` to authenticate           |
+| `No configuration found`       | Run `vault init` to set up                |
+| `Invalid API key`              | Run `nia login` to re-authenticate        |
+| `No synced folders found`      | Run `nia add ~/path` to add folders       |
+| `No folders selected`          | Run `vault folders add` to select folders |
+| `Could not connect to Nia API` | Check your internet connection            |
 
 ## License
 
