@@ -126,7 +126,8 @@
         {
           "id": "5.1",
           "name": "Test build with bun build (verify shebang preserved)",
-          "status": "pending"
+          "status": "completed",
+          "notes": "Build successful - shebang preserved, file executable, CLI help works"
         },
         {
           "id": "5.2",
