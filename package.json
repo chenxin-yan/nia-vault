@@ -1,8 +1,21 @@
 {
   "name": "nia-vault",
-  "module": "index.ts",
+  "version": "0.1.0",
+  "description": "CLI app for querying local notes via Nia semantic search",
   "type": "module",
-  "private": true,
+  "bin": {
+    "vault": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node --format esm",
+    "dev": "bun run ./src/index.ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
