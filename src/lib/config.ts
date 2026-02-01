@@ -1,23 +1,22 @@
 import { access, mkdir, readFile, unlink, writeFile } from "fs/promises";
 import { homedir } from "os";
 import { dirname, join } from "path";
-import type { VaultConfig } from "../types.js";
+import z from "zod";
+
+// nia-vault configuration (stored in ~/.config/nia-vault/config.json)
+export const VaultConfig = z.object({
+  selectedFolders: z.string().array().default([]),
+});
+export type VaultConfig = z.infer<typeof VaultConfig>;
 
 // Path to nia-vault config directory and file
-const CONFIG_DIR = join(homedir(), ".config", "nia-vault");
-const CONFIG_PATH = join(CONFIG_DIR, "config.json");
-
-/**
- * Get the path to vault config (for display purposes)
- */
-export function getVaultConfigPath(): string {
-  return CONFIG_PATH;
-}
+export const CONFIG_DIR = join(homedir(), ".config", "nia-vault");
+export const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 
 /**
  * Check if vault config exists
  */
-export async function configExists(): Promise<boolean> {
+export async function configExists() {
   try {
     await access(CONFIG_PATH);
     return true;
@@ -28,22 +27,13 @@ export async function configExists(): Promise<boolean> {
 
 /**
  * Read vault configuration from ~/.config/nia-vault/config.json
- * Returns null if config doesn't exist or is invalid
+ * Returns null if config doesn't exist
+ * Throws ZodError if config exists but is invalid
  */
-export async function readVaultConfig(): Promise<VaultConfig | null> {
-  try {
-    const content = await readFile(CONFIG_PATH, "utf-8");
-    const config = JSON.parse(content) as VaultConfig;
-
-    // Validate config structure
-    if (!Array.isArray(config.selectedFolders)) {
-      return null;
-    }
-
-    return config;
-  } catch {
-    return null;
-  }
+export async function readVaultConfig() {
+  const content = await readFile(CONFIG_PATH, "utf-8");
+  const json = JSON.parse(content);
+  return VaultConfig.parse(json);
 }
 
 /**
@@ -51,7 +41,7 @@ export async function readVaultConfig(): Promise<VaultConfig | null> {
  * Creates the config directory if it doesn't exist
  * Sets file permissions to 0600 (user read/write only)
  */
-export async function writeVaultConfig(config: VaultConfig): Promise<void> {
+async function writeVaultConfig(config: VaultConfig) {
   // Ensure config directory exists
   await mkdir(dirname(CONFIG_PATH), { recursive: true });
 
@@ -61,49 +51,24 @@ export async function writeVaultConfig(config: VaultConfig): Promise<void> {
 }
 
 /**
- * Get selected folder IDs from config
- * Returns empty array if config doesn't exist
+ * Update vault configuration by merging with existing config
+ * Reads current config, merges with updates, and writes back
+ * Uses Zod schema defaults for missing fields
  */
-export async function getSelectedFolders(): Promise<string[]> {
-  const config = await readVaultConfig();
-  return config?.selectedFolders ?? [];
-}
-
-/**
- * Save selected folder IDs to config
- */
-export async function saveSelectedFolders(folderIds: string[]): Promise<void> {
-  const config: VaultConfig = {
-    selectedFolders: folderIds,
-  };
-  await writeVaultConfig(config);
-}
-
-/**
- * Add folder IDs to selected folders
- */
-export async function addSelectedFolders(folderIds: string[]): Promise<void> {
-  const current = await getSelectedFolders();
-  const updated = [...new Set([...current, ...folderIds])];
-  await saveSelectedFolders(updated);
-}
-
-/**
- * Remove folder IDs from selected folders
- */
-export async function removeSelectedFolders(
-  folderIds: string[],
-): Promise<void> {
-  const current = await getSelectedFolders();
-  const updated = current.filter((id) => !folderIds.includes(id));
-  await saveSelectedFolders(updated);
+export async function updateVaultConfig(updates: Partial<VaultConfig>) {
+  let current: VaultConfig | Record<string, never> = {};
+  if (await configExists()) {
+    current = await readVaultConfig();
+  }
+  const updated = VaultConfig.parse({ ...current, ...updates });
+  await writeVaultConfig(updated);
 }
 
 /**
  * Delete vault configuration file
  * Returns true if deleted, false if didn't exist
  */
-export async function deleteVaultConfig(): Promise<boolean> {
+export async function deleteVaultConfig() {
   try {
     await unlink(CONFIG_PATH);
     return true;

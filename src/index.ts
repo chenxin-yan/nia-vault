@@ -6,7 +6,13 @@ import { configCommand, configResetCommand } from "./commands/config.js";
 import { foldersCommand } from "./commands/folders.js";
 import { initCommand } from "./commands/init.js";
 import { syncCommand } from "./commands/sync.js";
-import type { AskFlags } from "./types.js";
+
+// CLI flags for ask command
+export interface AskFlags {
+  folder?: string;
+  limit?: number;
+  sync?: boolean;
+}
 
 const cli = meow(
   `

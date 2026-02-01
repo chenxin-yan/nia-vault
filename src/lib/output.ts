@@ -1,21 +1,30 @@
-import type { LocalFolder, SearchResult } from "../types.js";
+import figures from "@inquirer/figures";
+import type { SearchResult } from "./nia";
+import type { LocalFolder } from "./nia-sync";
 
 // Separator line for search results
-const SEPARATOR = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+const SEPARATOR = figures.lineBold.repeat(42);
 
 /**
  * Format search results for display
  */
 export function formatSearchResults(result: SearchResult): string {
-  if (result.results.length === 0) {
+  if (result.sources.length === 0) {
     return "No results found. Try a different query or check if your folders are synced.";
   }
 
   const lines: string[] = [];
 
-  for (const item of result.results) {
+  // Show AI-generated answer if available
+  if (result.answer) {
+    lines.push(result.answer);
+    lines.push("");
+    lines.push("Sources:");
+  }
+
+  for (const item of result.sources) {
     lines.push(SEPARATOR);
-    lines.push(`📄 ${item.path}`);
+    lines.push(`📄 ${item.filePath ?? "Unknown source"}`);
     lines.push(SEPARATOR);
     lines.push(item.content);
     lines.push("");
@@ -41,7 +50,7 @@ export function formatFolderList(
   if (selected.length > 0) {
     lines.push("Search folders (included in queries):");
     for (const folder of selected) {
-      lines.push(`  ✓ ${folder.name.padEnd(18)} ${folder.path}`);
+      lines.push(`  ${figures.tick} ${folder.name.padEnd(18)} ${folder.path}`);
     }
   }
 
@@ -49,16 +58,13 @@ export function formatFolderList(
     if (lines.length > 0) lines.push("");
     lines.push("Available folders (synced but not included):");
     for (const folder of available) {
-      lines.push(`  ○ ${folder.name.padEnd(18)} ${folder.path}`);
+      lines.push(
+        `  ${figures.radioOff} ${folder.name.padEnd(18)} ${folder.path}`,
+      );
     }
   }
 
-  if (lines.length > 0) {
-    lines.push("");
-    lines.push(
-      "Tip: Use 'vault folders add' or 'vault folders remove' to manage",
-    );
-  } else {
+  if (lines.length <= 0) {
     lines.push("No synced folders found. Run 'nia add ~/path' to add folders.");
   }
 
@@ -69,21 +75,14 @@ export function formatFolderList(
  * Format success message
  */
 export function success(message: string): string {
-  return `✓ ${message}`;
+  return `${figures.tick} ${message}`;
 }
 
 /**
  * Format error message
  */
 export function error(message: string): string {
-  return `✗ ${message}`;
-}
-
-/**
- * Format info message
- */
-export function info(message: string): string {
-  return message;
+  return `${figures.cross} ${message}`;
 }
 
 /**
