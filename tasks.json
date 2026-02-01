@@ -82,7 +82,7 @@
         {
           "id": "3.3",
           "name": "Implement sync command (src/commands/sync.ts)",
-          "status": "pending",
+          "status": "completed",
           "notes": "Runs `nia once` to trigger one-time sync"
         },
         {
