@@ -187,6 +187,41 @@ This file only stores which folders are included in searches. The API key is alw
 | `No folders selected`          | Run `vault folders add` to select folders |
 | `Could not connect to Nia API` | Check your internet connection            |
 
+## Contributing
+
+### Adding a Changeset
+
+When making changes that should be included in a release, please add a changeset:
+
+```bash
+bun changeset
+```
+
+This will prompt you to describe your changes. Choose the appropriate version bump:
+
+- **patch** (0.0.x): Bug fixes, small improvements, documentation updates
+- **minor** (0.x.0): New features, non-breaking changes
+- **major** (x.0.0): Breaking changes
+
+The changeset file should be committed with your PR.
+
+### Development Workflow
+
+```bash
+# Clone the repository
+git clone https://github.com/chenxin-yan/nia-vault.git
+cd nia-vault
+
+# Install dependencies
+bun install
+
+# Run in development mode
+bun run dev
+
+# Build the project
+bun run build
+```
+
 ## License
 
 MIT
