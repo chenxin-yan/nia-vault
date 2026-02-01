@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
-import meow from 'meow';
-import { initCommand } from './commands/init.js';
-import { askCommand } from './commands/ask.js';
-import { syncCommand } from './commands/sync.js';
-import { foldersListCommand, foldersAddCommand, foldersRemoveCommand } from './commands/folders.js';
-import { configCommand, configResetCommand } from './commands/config.js';
-import type { AskFlags } from './types.js';
+import meow from "meow";
+import { askCommand } from "./commands/ask.js";
+import { configCommand, configResetCommand } from "./commands/config.js";
+import {
+  foldersAddCommand,
+  foldersListCommand,
+  foldersRemoveCommand,
+} from "./commands/folders.js";
+import { initCommand } from "./commands/init.js";
+import { syncCommand } from "./commands/sync.js";
+import type { AskFlags } from "./types.js";
 
 const cli = meow(
   `
@@ -48,30 +52,30 @@ const cli = meow(
     importMeta: import.meta,
     flags: {
       folder: {
-        type: 'string',
-        shortFlag: 'f',
+        type: "string",
+        shortFlag: "f",
       },
       limit: {
-        type: 'number',
-        shortFlag: 'l',
+        type: "number",
+        shortFlag: "l",
       },
       sync: {
-        type: 'boolean',
-        shortFlag: 's',
+        type: "boolean",
+        shortFlag: "s",
       },
       reset: {
-        type: 'boolean',
+        type: "boolean",
       },
       help: {
-        type: 'boolean',
-        shortFlag: 'h',
+        type: "boolean",
+        shortFlag: "h",
       },
       version: {
-        type: 'boolean',
-        shortFlag: 'v',
+        type: "boolean",
+        shortFlag: "v",
       },
     },
-  }
+  },
 );
 
 async function main(): Promise<void> {
@@ -83,12 +87,12 @@ async function main(): Promise<void> {
   }
 
   switch (command) {
-    case 'init':
+    case "init":
       await initCommand();
       break;
 
-    case 'ask': {
-      const query = args.join(' ');
+    case "ask": {
+      const query = args.join(" ");
       const askFlags: AskFlags = {
         folder: cli.flags.folder,
         limit: cli.flags.limit,
@@ -98,20 +102,20 @@ async function main(): Promise<void> {
       break;
     }
 
-    case 'sync':
+    case "sync":
       await syncCommand();
       break;
 
-    case 'folders': {
-      const subcommand = args[0] || 'list';
+    case "folders": {
+      const subcommand = args[0] || "list";
       switch (subcommand) {
-        case 'list':
+        case "list":
           await foldersListCommand();
           break;
-        case 'add':
+        case "add":
           await foldersAddCommand();
           break;
-        case 'remove':
+        case "remove":
           await foldersRemoveCommand();
           break;
         default:
@@ -122,7 +126,7 @@ async function main(): Promise<void> {
       break;
     }
 
-    case 'config':
+    case "config":
       if (cli.flags.reset) {
         await configResetCommand();
       } else {
@@ -138,6 +142,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error('An unexpected error occurred:', error.message);
+  console.error("An unexpected error occurred:", error.message);
   process.exit(1);
 });

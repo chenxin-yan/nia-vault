@@ -1,13 +1,13 @@
-import { checkbox } from '@inquirer/prompts';
-import { getApiKey, isNiaSyncConfigured } from '../lib/nia-sync.js';
-import { listLocalFolders, NiaApiError } from '../lib/nia.js';
+import { checkbox } from "@inquirer/prompts";
 import {
-  getSelectedFolders,
   addSelectedFolders,
-  removeSelectedFolders,
   configExists,
-} from '../lib/config.js';
-import { formatFolderList } from '../lib/output.js';
+  getSelectedFolders,
+  removeSelectedFolders,
+} from "../lib/config.js";
+import { listLocalFolders, NiaApiError } from "../lib/nia.js";
+import { getApiKey, isNiaSyncConfigured } from "../lib/nia-sync.js";
+import { formatFolderList } from "../lib/output.js";
 
 /**
  * Folders list command (default)
@@ -24,7 +24,7 @@ export async function foldersListCommand(): Promise<void> {
   // Get API key
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.log('✗ Could not read API key from nia-sync config.\n');
+    console.log("✗ Could not read API key from nia-sync config.\n");
     process.exit(1);
   }
 
@@ -36,13 +36,17 @@ export async function foldersListCommand(): Promise<void> {
     if (error instanceof NiaApiError) {
       console.log(`✗ ${error.message}\n`);
     } else {
-      console.log('✗ Could not connect to Nia API. Check your internet connection.\n');
+      console.log(
+        "✗ Could not connect to Nia API. Check your internet connection.\n",
+      );
     }
     process.exit(1);
   }
 
   if (folders.length === 0) {
-    console.log("No synced folders found. Run 'nia add ~/path' to add folders.\n");
+    console.log(
+      "No synced folders found. Run 'nia add ~/path' to add folders.\n",
+    );
     return;
   }
 
@@ -51,7 +55,7 @@ export async function foldersListCommand(): Promise<void> {
 
   // Display formatted folder list
   console.log(formatFolderList(folders, selectedIds));
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -76,7 +80,7 @@ export async function foldersAddCommand(): Promise<void> {
   // Get API key
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.log('✗ Could not read API key from nia-sync config.\n');
+    console.log("✗ Could not read API key from nia-sync config.\n");
     process.exit(1);
   }
 
@@ -88,13 +92,17 @@ export async function foldersAddCommand(): Promise<void> {
     if (error instanceof NiaApiError) {
       console.log(`✗ ${error.message}\n`);
     } else {
-      console.log('✗ Could not connect to Nia API. Check your internet connection.\n');
+      console.log(
+        "✗ Could not connect to Nia API. Check your internet connection.\n",
+      );
     }
     process.exit(1);
   }
 
   if (folders.length === 0) {
-    console.log("No synced folders found. Run 'nia add ~/path' to add folders.\n");
+    console.log(
+      "No synced folders found. Run 'nia add ~/path' to add folders.\n",
+    );
     return;
   }
 
@@ -105,13 +113,13 @@ export async function foldersAddCommand(): Promise<void> {
   const availableFolders = folders.filter((f) => !selectedIds.includes(f.id));
 
   if (availableFolders.length === 0) {
-    console.log('All synced folders are already included in searches.\n');
+    console.log("All synced folders are already included in searches.\n");
     return;
   }
 
   // Present checkbox for folder selection
   const foldersToAdd = await checkbox<string>({
-    message: 'Select folders to add to searches:',
+    message: "Select folders to add to searches:",
     choices: availableFolders.map((folder) => ({
       name: `${folder.name.padEnd(20)} ${folder.path}`,
       value: folder.id,
@@ -119,14 +127,16 @@ export async function foldersAddCommand(): Promise<void> {
   });
 
   if (foldersToAdd.length === 0) {
-    console.log('\nNo folders selected.\n');
+    console.log("\nNo folders selected.\n");
     return;
   }
 
   // Add selected folders to config
   await addSelectedFolders(foldersToAdd);
 
-  console.log(`\n✓ Added ${foldersToAdd.length} folder${foldersToAdd.length === 1 ? '' : 's'} to search scope.\n`);
+  console.log(
+    `\n✓ Added ${foldersToAdd.length} folder${foldersToAdd.length === 1 ? "" : "s"} to search scope.\n`,
+  );
 }
 
 /**
@@ -151,7 +161,7 @@ export async function foldersRemoveCommand(): Promise<void> {
   // Get API key
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.log('✗ Could not read API key from nia-sync config.\n');
+    console.log("✗ Could not read API key from nia-sync config.\n");
     process.exit(1);
   }
 
@@ -163,7 +173,9 @@ export async function foldersRemoveCommand(): Promise<void> {
     if (error instanceof NiaApiError) {
       console.log(`✗ ${error.message}\n`);
     } else {
-      console.log('✗ Could not connect to Nia API. Check your internet connection.\n');
+      console.log(
+        "✗ Could not connect to Nia API. Check your internet connection.\n",
+      );
     }
     process.exit(1);
   }
@@ -175,13 +187,15 @@ export async function foldersRemoveCommand(): Promise<void> {
   const selectedFolders = folders.filter((f) => selectedIds.includes(f.id));
 
   if (selectedFolders.length === 0) {
-    console.log("No folders are currently selected for search. Run 'vault folders add' to add folders.\n");
+    console.log(
+      "No folders are currently selected for search. Run 'vault folders add' to add folders.\n",
+    );
     return;
   }
 
   // Present checkbox for folder selection
   const foldersToRemove = await checkbox<string>({
-    message: 'Select folders to remove from searches:',
+    message: "Select folders to remove from searches:",
     choices: selectedFolders.map((folder) => ({
       name: `${folder.name.padEnd(20)} ${folder.path}`,
       value: folder.id,
@@ -189,12 +203,14 @@ export async function foldersRemoveCommand(): Promise<void> {
   });
 
   if (foldersToRemove.length === 0) {
-    console.log('\nNo folders selected.\n');
+    console.log("\nNo folders selected.\n");
     return;
   }
 
   // Remove selected folders from config
   await removeSelectedFolders(foldersToRemove);
 
-  console.log(`\n✓ Removed ${foldersToRemove.length} folder${foldersToRemove.length === 1 ? '' : 's'} from search scope.\n`);
+  console.log(
+    `\n✓ Removed ${foldersToRemove.length} folder${foldersToRemove.length === 1 ? "" : "s"} from search scope.\n`,
+  );
 }

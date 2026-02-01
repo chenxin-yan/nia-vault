@@ -1,5 +1,5 @@
-import { isNiaSyncConfigured, runNiaOnce } from '../lib/nia-sync.js';
-import { getSelectedFolders, configExists } from '../lib/config.js';
+import { configExists, getSelectedFolders } from "../lib/config.js";
+import { isNiaSyncConfigured, runNiaOnce } from "../lib/nia-sync.js";
 
 /**
  * Sync command
@@ -23,17 +23,21 @@ export async function syncCommand(): Promise<void> {
   // Get selected folders count for the success message
   const selectedFolders = await getSelectedFolders();
   if (selectedFolders.length === 0) {
-    console.log("✗ No folders selected for sync. Run 'vault folders add' to select folders.\n");
+    console.log(
+      "✗ No folders selected for sync. Run 'vault folders add' to select folders.\n",
+    );
     process.exit(1);
   }
 
   // Run sync
-  console.log('Syncing folders with Nia...');
+  console.log("Syncing folders with Nia...");
   const syncSuccess = await runNiaOnce();
 
   if (syncSuccess) {
     const folderCount = selectedFolders.length;
-    console.log(`✓ Sync complete (${folderCount} folder${folderCount === 1 ? '' : 's'} updated)\n`);
+    console.log(
+      `✓ Sync complete (${folderCount} folder${folderCount === 1 ? "" : "s"} updated)\n`,
+    );
   } else {
     console.log("✗ Sync failed. Make sure 'nia' command is available.\n");
     process.exit(1);

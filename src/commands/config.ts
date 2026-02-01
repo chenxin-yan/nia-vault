@@ -1,16 +1,16 @@
-import { isNiaSyncConfigured, getNiaSyncConfigPath } from '../lib/nia-sync.js';
 import {
-  getVaultConfigPath,
-  getSelectedFolders,
-  deleteVaultConfig,
   configExists,
-} from '../lib/config.js';
+  deleteVaultConfig,
+  getSelectedFolders,
+  getVaultConfigPath,
+} from "../lib/config.js";
+import { getNiaSyncConfigPath, isNiaSyncConfigured } from "../lib/nia-sync.js";
 
 /**
  * Config command - view current configuration
  */
 export async function configCommand(): Promise<void> {
-  console.log('\nConfiguration:\n');
+  console.log("\nConfiguration:\n");
 
   // Config file location
   const configPath = getVaultConfigPath();
@@ -21,7 +21,7 @@ export async function configCommand(): Promise<void> {
   if (niaSyncConfigured) {
     console.log(`  API key source:  ${getNiaSyncConfigPath()} (nia-sync)`);
   } else {
-    console.log('  API key source:  Not configured');
+    console.log("  API key source:  Not configured");
   }
 
   // Search folders count
@@ -30,10 +30,10 @@ export async function configCommand(): Promise<void> {
     const selectedFolders = await getSelectedFolders();
     console.log(`  Search folders:  ${selectedFolders.length} selected`);
   } else {
-    console.log('  Search folders:  Not configured');
+    console.log("  Search folders:  Not configured");
   }
 
-  console.log('');
+  console.log("");
 }
 
 /**
@@ -45,6 +45,6 @@ export async function configResetCommand(): Promise<void> {
   if (deleted) {
     console.log("✓ Config file deleted. Run 'vault init' to reconfigure.\n");
   } else {
-    console.log('No config file to delete.\n');
+    console.log("No config file to delete.\n");
   }
 }

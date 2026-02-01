@@ -1,11 +1,11 @@
-import { readFile, writeFile, mkdir, unlink, access } from 'fs/promises';
-import { homedir } from 'os';
-import { join, dirname } from 'path';
-import type { VaultConfig } from '../types.js';
+import { access, mkdir, readFile, unlink, writeFile } from "fs/promises";
+import { homedir } from "os";
+import { dirname, join } from "path";
+import type { VaultConfig } from "../types.js";
 
 // Path to nia-vault config directory and file
-const CONFIG_DIR = join(homedir(), '.config', 'nia-vault');
-const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
+const CONFIG_DIR = join(homedir(), ".config", "nia-vault");
+const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 
 /**
  * Get the path to vault config (for display purposes)
@@ -32,7 +32,7 @@ export async function configExists(): Promise<boolean> {
  */
 export async function readVaultConfig(): Promise<VaultConfig | null> {
   try {
-    const content = await readFile(CONFIG_PATH, 'utf-8');
+    const content = await readFile(CONFIG_PATH, "utf-8");
     const config = JSON.parse(content) as VaultConfig;
 
     // Validate config structure
@@ -91,7 +91,9 @@ export async function addSelectedFolders(folderIds: string[]): Promise<void> {
 /**
  * Remove folder IDs from selected folders
  */
-export async function removeSelectedFolders(folderIds: string[]): Promise<void> {
+export async function removeSelectedFolders(
+  folderIds: string[],
+): Promise<void> {
   const current = await getSelectedFolders();
   const updated = current.filter((id) => !folderIds.includes(id));
   await saveSelectedFolders(updated);
