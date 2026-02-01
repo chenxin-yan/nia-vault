@@ -52,7 +52,7 @@
         {
           "id": "2.4",
           "name": "Implement Nia API client (src/lib/nia.ts)",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "2.5",
