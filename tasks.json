@@ -156,24 +156,6 @@
           "status": "pending"
         }
       ]
-    },
-    {
-      "id": "7",
-      "name": "Publish",
-      "status": "pending",
-      "priority": "low",
-      "subtasks": [
-        {
-          "id": "7.1",
-          "name": "Final review of package.json",
-          "status": "pending"
-        },
-        {
-          "id": "7.2",
-          "name": "Publish to npm registry",
-          "status": "pending"
-        }
-      ]
     }
   ],
   "notes": [
