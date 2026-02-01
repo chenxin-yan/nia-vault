@@ -76,7 +76,7 @@
         {
           "id": "3.2",
           "name": "Implement ask command (src/commands/ask.ts)",
-          "status": "pending",
+          "status": "completed",
           "notes": "Includes --sync flag to run nia once before search"
         },
         {
