@@ -55,12 +55,14 @@ async function niaFetch(
 export async function listLocalFolders(apiKey: string): Promise<LocalFolder[]> {
   try {
     const response = await niaFetch(apiKey, '/data-sources?source_type=local_folder');
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown> | unknown[];
 
     // Handle API response format - may be wrapped in a data field or be an array directly
-    const folders = Array.isArray(data) ? data : (data.data ?? data.results ?? []);
+    const folders = Array.isArray(data)
+      ? data
+      : ((data as Record<string, unknown>).data ?? (data as Record<string, unknown>).results ?? []);
 
-    return folders.map((folder: Record<string, unknown>) => ({
+    return (folders as Record<string, unknown>[]).map((folder: Record<string, unknown>) => ({
       id: String(folder.id ?? ''),
       name: String(folder.name ?? folder.title ?? ''),
       path: String(folder.path ?? folder.local_path ?? ''),
@@ -93,21 +95,25 @@ export async function searchLocalFolders(
       }),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown> | unknown[];
 
     // Handle API response format
-    const results = Array.isArray(data) ? data : (data.results ?? data.data ?? []);
+    const results = Array.isArray(data)
+      ? data
+      : ((data as Record<string, unknown>).results ?? (data as Record<string, unknown>).data ?? []);
 
-    const searchResults: SearchResultItem[] = results.map((item: Record<string, unknown>) => ({
-      title: String(item.title ?? item.name ?? ''),
-      content: String(item.content ?? item.snippet ?? item.text ?? ''),
-      path: String(item.path ?? item.file_path ?? ''),
-      score: Number(item.score ?? item.relevance ?? 0),
-    }));
+    const searchResults: SearchResultItem[] = (results as Record<string, unknown>[]).map(
+      (item: Record<string, unknown>) => ({
+        title: String(item.title ?? item.name ?? ''),
+        content: String(item.content ?? item.snippet ?? item.text ?? ''),
+        path: String(item.path ?? item.file_path ?? ''),
+        score: Number(item.score ?? item.relevance ?? 0),
+      }),
+    );
 
     return {
       results: searchResults,
-      total: data.total ?? searchResults.length,
+      total: ((data as Record<string, unknown>).total as number) ?? searchResults.length,
     };
   } catch (error) {
     if (error instanceof NiaApiError) {
