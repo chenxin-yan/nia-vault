@@ -193,8 +193,6 @@ Search folders (included in queries):
 
 Available folders (synced but not included):
   ○ old-archive       ~/archive
-
-Tip: Use 'vault folders add' or 'vault folders remove' to manage
 ```
 
 ### `vault config`
@@ -278,7 +276,7 @@ async function listLocalFolders(apiKey: string): Promise<LocalFolder[]>;
 async function searchLocalFolders(
   apiKey: string,
   query: string,
-  folderIds: string[],
+  folderIds: string[]
 ): Promise<SearchResult>;
 ```
 
@@ -344,9 +342,7 @@ After building, ensure the shebang is preserved in `dist/index.js`:
   "bin": {
     "vault": "./dist/index.js"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node --format esm",
     "dev": "bun run ./src/index.ts"

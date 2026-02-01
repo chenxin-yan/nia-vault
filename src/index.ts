@@ -3,11 +3,7 @@
 import meow from "meow";
 import { askCommand } from "./commands/ask.js";
 import { configCommand, configResetCommand } from "./commands/config.js";
-import {
-  foldersAddCommand,
-  foldersListCommand,
-  foldersRemoveCommand,
-} from "./commands/folders.js";
+import { foldersCommand } from "./commands/folders.js";
 import { initCommand } from "./commands/init.js";
 import { syncCommand } from "./commands/sync.js";
 import type { AskFlags } from "./types.js";
@@ -21,18 +17,13 @@ const cli = meow(
     init              Interactive setup wizard
     ask <query>       Search your notes using semantic search
     sync              Manually sync folders with Nia
-    folders           List, add, or remove folders from search scope
+    folders           Manage folders in search scope
     config            View or reset configuration
 
   Options for 'ask'
     -f, --folder <id>  Search specific folder only
     -l, --limit <n>    Max results (default: 5)
     -s, --sync         Sync folders before searching
-
-  Options for 'folders'
-    list              List all folders (default)
-    add               Add folders to search scope
-    remove            Remove folders from search scope
 
   Options for 'config'
     --reset           Delete configuration file
@@ -47,8 +38,6 @@ const cli = meow(
     $ vault ask "meeting notes" --sync --limit 10
     $ vault sync
     $ vault folders
-    $ vault folders add
-    $ vault folders remove
     $ vault config
     $ vault config --reset
 `,
@@ -110,25 +99,9 @@ async function main(): Promise<void> {
       await syncCommand();
       break;
 
-    case "folders": {
-      const subcommand = args[0] || "list";
-      switch (subcommand) {
-        case "list":
-          await foldersListCommand();
-          break;
-        case "add":
-          await foldersAddCommand();
-          break;
-        case "remove":
-          await foldersRemoveCommand();
-          break;
-        default:
-          console.log(`Unknown folders subcommand: ${subcommand}`);
-          console.log("Available subcommands: list, add, remove\n");
-          process.exit(1);
-      }
+    case "folders":
+      await foldersCommand();
       break;
-    }
 
     case "config":
       if (cli.flags.reset) {
