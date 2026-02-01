@@ -57,7 +57,7 @@
         {
           "id": "2.5",
           "name": "Implement output formatter (src/lib/output.ts)",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
