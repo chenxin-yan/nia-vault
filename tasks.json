@@ -94,7 +94,8 @@
         {
           "id": "3.5",
           "name": "Implement config command (src/commands/config.ts)",
-          "status": "pending"
+          "status": "completed",
+          "notes": "Shows config file path, API key source, and selected folders count. --reset flag to delete config"
         }
       ]
     },
