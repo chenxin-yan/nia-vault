@@ -39,7 +39,7 @@ LOG_FILE="ralph.log"
 # Files
 PROMPT_FILE="PROMPT.md"
 TASKS_FILE="tasks.json"
-SPEC_FILE="docs/spec.md"
+SPEC_FILE="spec.md"
 
 # Colors for output
 RED='\033[0;31m'
