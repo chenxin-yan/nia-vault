@@ -5,8 +5,11 @@ import type { LocalFolder } from "./nia-sync";
 /**
  * Format search results for display
  */
-export function formatSearchResults(result: SearchResult): string {
-  if (result.sources.length === 0) {
+export function formatSearchResults(
+  result: SearchResult,
+  showSources: boolean = false,
+): string {
+  if (!result.answer && result.sources.length === 0) {
     return "No results found. Try a different query or check if your folders are synced.";
   }
 
@@ -15,18 +18,20 @@ export function formatSearchResults(result: SearchResult): string {
   // Show AI-generated answer if available
   if (result.answer) {
     lines.push(result.answer);
+  }
+
+  // Show sources only if flag is enabled and sources exist
+  if (showSources && result.sources.length > 0) {
     lines.push("");
     lines.push("Sources:");
-  }
-
-  for (const item of result.sources) {
-    if (item.filePath) {
-      lines.push(`  📄 ${item.filePath}`);
+    for (const item of result.sources) {
+      if (item.filePath) {
+        lines.push(`- 📄 ${item.filePath}`);
+      }
     }
+    lines.push("");
+    lines.push(`Found ${result.total} result${result.total === 1 ? "" : "s"}`);
   }
-  lines.push("");
-
-  lines.push(`Found ${result.total} result${result.total === 1 ? "" : "s"}`);
 
   return lines.join("\n");
 }

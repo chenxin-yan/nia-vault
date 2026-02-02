@@ -12,6 +12,7 @@ export interface AskFlags {
   folder?: string;
   limit?: number;
   sync?: boolean;
+  sources?: boolean;
 }
 
 const cli = meow(
@@ -30,6 +31,7 @@ const cli = meow(
     -f, --folder <id>  Search specific folder only
     -l, --limit <n>    Max results (default: 5)
     -s, --sync         Sync folders before searching
+    -S, --sources      Include source citations in output
 
   Options for 'config'
     --reset           Delete configuration file
@@ -61,6 +63,10 @@ const cli = meow(
       sync: {
         type: "boolean",
         shortFlag: "s",
+      },
+      sources: {
+        type: "boolean",
+        shortFlag: "S",
       },
       reset: {
         type: "boolean",
@@ -96,6 +102,7 @@ async function main(): Promise<void> {
         folder: cli.flags.folder,
         limit: cli.flags.limit,
         sync: cli.flags.sync,
+        sources: cli.flags.sources,
       };
       await askCommand(query, askFlags);
       break;

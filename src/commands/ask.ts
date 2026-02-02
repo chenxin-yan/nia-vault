@@ -70,8 +70,9 @@ export const askCommand = withContext(
         ctx.niaSyncConfig.api_key,
         query.trim(),
         selectedFolders,
+        flags.sources,
       );
-      console.log(formatSearchResults(result));
+      console.log(formatSearchResults(result, flags.sources));
     } catch (err) {
       if (err instanceof NiaApiError) {
         console.log(error(err.message));

@@ -157,6 +157,7 @@ function transformSource(source: z.infer<typeof RawSource>): SearchResultItem {
  * @param apiKey - Nia API key
  * @param query - Natural language search query
  * @param folderIds - Array of local folder IDs to search (from listLocalFolders)
+ * @param includeSources - Whether to include source citations in the response
  * @returns Search results with AI answer and source snippets
  *
  * @see https://docs.trynia.ai/api-reference/search-&-research/query-indexed-sources
@@ -165,6 +166,7 @@ export async function searchLocalFolders(
   apiKey: string,
   query: string,
   folderIds: string[],
+  includeSources: boolean = false,
 ) {
   try {
     const response = await niaFetch(apiKey, "/search/query", {
@@ -173,7 +175,7 @@ export async function searchLocalFolders(
         messages: [{ role: "user", content: query }],
         local_folders: folderIds,
         search_mode: "sources",
-        include_sources: true,
+        include_sources: includeSources,
         stream: false,
       }),
     });
