@@ -30,7 +30,6 @@ const cli = meow(
 
   Options for 'ask'
     -f, --folder <id>  Search specific folder only
-    -l, --limit <n>    Max results (default: 5)
     -s, --sync         Sync folders before searching
     -S, --sources      Include source citations in output
     --no-stream        Disable streaming (wait for full response)
@@ -45,7 +44,6 @@ const cli = meow(
   Examples
     $ vault init
     $ vault ask "What are my notes about project planning?"
-    $ vault ask "meeting notes" --sync --limit 10
     $ vault sync
     $ vault folders
     $ vault config

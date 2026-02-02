@@ -150,7 +150,6 @@ Found 2 results
 **Flags:**
 
 - `-f, --folder <id>` - Search specific folder only
-- `-l, --limit <n>` - Max results (default: 5)
 - `-s, --sync` - Sync folders before searching (runs `nia once`)
 
 **With sync flag:**
