@@ -60,45 +60,9 @@ vault ask "meeting notes from last week" --sync
 
 Interactive setup wizard that detects your nia-sync configuration and lets you select which folders to include in searches.
 
-```
-$ vault init
-
-Welcome to nia-vault!
-
-Checking for nia-sync configuration...
-✓ Found API key in ~/.nia-sync/config.json
-
-Fetching synced folders...
-✓ Found 3 synced folders
-
-Select folders to include in searches:
-  ◉ personal-notes    ~/Documents/notes
-  ◉ work-wiki         ~/work/wiki
-  ◯ old-archive       ~/archive
-
-✓ Configuration saved to ~/.config/nia-vault/config.json
-
-You're all set! Try: vault ask "your question here"
-```
-
 ### `vault ask "<question>"`
 
 Query your notes using semantic search.
-
-```
-$ vault ask "What are my notes about project planning?"
-
-Searching 2 folders...
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📄 projects/q1-planning.md
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-...quarterly planning meeting. Key decisions:
-- Focus on user onboarding improvements
-- Allocate 30% time to tech debt...
-
-Found 2 results
-```
 
 **Options:**
 
@@ -112,51 +76,13 @@ Found 2 results
 
 Manually trigger a sync of all folders.
 
-```
-$ vault sync
-
-Syncing folders with Nia...
-✓ Sync complete (3 folders updated)
-```
-
 ### `vault folders`
 
 List, add, or remove folders from search scope.
 
-```
-$ vault folders
-
-Search folders (included in queries):
-  ✓ personal-notes    ~/Documents/notes
-  ✓ work-wiki         ~/work/wiki
-
-Available folders (synced but not included):
-  ○ old-archive       ~/archive
-
-Tip: Use 'vault folders add' or 'vault folders remove' to manage
-```
-
-**Subcommands:**
-
-- `vault folders` - List all folders (default)
-- `vault folders add` - Add folders to search scope
-- `vault folders remove` - Remove folders from search scope
-
 ### `vault config`
 
 View or reset configuration.
-
-```
-$ vault config
-
-Configuration:
-  Config file:     ~/.config/nia-vault/config.json
-  API key source:  ~/.nia-sync/config.json (nia-sync)
-  Search folders:  2 selected
-
-$ vault config --reset
-✓ Config file deleted. Run 'vault init' to reconfigure.
-```
 
 ## Configuration
 
@@ -178,14 +104,14 @@ This file only stores which folders are included in searches. The API key is alw
 
 ## Troubleshooting
 
-| Error                          | Solution                                  |
-| ------------------------------ | ----------------------------------------- |
-| `nia-sync not configured`      | Run `nia login` to authenticate           |
-| `No configuration found`       | Run `vault init` to set up                |
-| `Invalid API key`              | Run `nia login` to re-authenticate        |
-| `No synced folders found`      | Run `nia add ~/path` to add folders       |
-| `No folders selected`          | Run `vault folders add` to select folders |
-| `Could not connect to Nia API` | Check your internet connection            |
+| Error                          | Solution                              |
+| ------------------------------ | ------------------------------------- |
+| `nia-sync not configured`      | Run `nia login` to authenticate       |
+| `No configuration found`       | Run `vault init` to set up            |
+| `Invalid API key`              | Run `nia login` to re-authenticate    |
+| `No synced folders found`      | Run `nia add ~/path` to add folders   |
+| `No folders selected`          | Run `vault folders` to select folders |
+| `Could not connect to Nia API` | Check your internet connection        |
 
 ## Contributing
 
