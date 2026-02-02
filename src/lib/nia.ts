@@ -1,3 +1,4 @@
+import { events } from "fetch-event-stream";
 import { z } from "zod";
 
 // Nia API base URL
@@ -100,6 +101,28 @@ export interface SearchResult {
   sources: SearchResultItem[];
   /** Total number of sources found */
   total: number;
+}
+
+// ============================================================================
+// Streaming Types
+// ============================================================================
+
+/**
+ * SSE event types from Nia API /search/query endpoint
+ * - sources: List of relevant code sources (when include_sources=true)
+ * - source_paths: List of file paths without content (when include_sources=false)
+ * - content: Chunks of the AI response
+ * - error: Any errors that occur during streaming
+ */
+export type NiaStreamEventType =
+  | "sources"
+  | "source_paths"
+  | "content"
+  | "error";
+
+export interface NiaStreamEvent {
+  type: NiaStreamEventType;
+  data: string;
 }
 
 // ============================================================================
@@ -217,5 +240,137 @@ export async function searchLocalFolders(
     throw new NiaApiError(
       "Could not connect to Nia API. Check your internet connection.",
     );
+  }
+}
+
+/**
+ * Schema for streaming chunk data
+ * The API sends JSON objects like: {"content": "text"} or {"sources": [...]}
+ */
+const StreamChunk = z.object({
+  content: z.string().optional(),
+  sources: z.array(RawSource).optional(),
+  source_paths: z.array(z.string()).optional(),
+  follow_up_questions: z.array(z.string()).optional(),
+  error: z.string().optional(),
+});
+
+/**
+ * Stream search results from Nia API using Server-Sent Events
+ *
+ * Uses POST /search/query with stream=true parameter.
+ * Yields events as they arrive for real-time display.
+ *
+ * The API sends SSE with JSON data in the format:
+ * - {"content": "text chunk"} - AI response text chunks
+ * - {"sources": [...]} - Source snippets (when include_sources=true)
+ * - {"source_paths": [...]} - File paths (when include_sources=false)
+ * - {"follow_up_questions": [...]} - Suggested follow-up questions
+ * - {"error": "message"} - Error messages
+ * - [DONE] - End of stream marker
+ *
+ * @param apiKey - Nia API key
+ * @param query - Natural language search query
+ * @param folderIds - Array of local folder IDs to search
+ * @param includeSources - Whether to include source citations
+ * @param signal - Optional AbortSignal for cancellation
+ * @yields NiaStreamEvent objects as they arrive
+ *
+ * @see https://docs.trynia.ai/api-reference/search-&-research/query-indexed-sources
+ */
+export async function* searchLocalFoldersStream(
+  apiKey: string,
+  query: string,
+  folderIds: string[],
+  includeSources: boolean = false,
+  signal?: AbortSignal,
+): AsyncGenerator<NiaStreamEvent, void, unknown> {
+  const response = await niaFetch(apiKey, "/search/query", {
+    method: "POST",
+    body: JSON.stringify({
+      messages: [{ role: "user", content: query }],
+      local_folders: folderIds,
+      search_mode: "sources",
+      include_sources: includeSources,
+      stream: true,
+    }),
+  });
+
+  if (!response.body) {
+    throw new NiaApiError("Response body is empty");
+  }
+
+  for await (const event of events(response, signal)) {
+    if (!event.data) continue;
+
+    // Handle end of stream marker
+    if (event.data === "[DONE]") {
+      return;
+    }
+
+    // Parse the JSON data from SSE event
+    try {
+      const parsed = StreamChunk.safeParse(JSON.parse(event.data));
+
+      if (!parsed.success) {
+        continue; // Skip malformed chunks
+      }
+
+      const chunk = parsed.data;
+
+      // Yield content chunks for real-time text display
+      if (chunk.content !== undefined) {
+        yield {
+          type: "content",
+          data: chunk.content,
+        };
+      }
+
+      // Yield sources when received
+      if (chunk.sources !== undefined) {
+        yield {
+          type: "sources",
+          data: JSON.stringify(chunk.sources),
+        };
+      }
+
+      // Yield source paths when received
+      if (chunk.source_paths !== undefined) {
+        yield {
+          type: "source_paths",
+          data: JSON.stringify(chunk.source_paths),
+        };
+      }
+
+      // Yield errors
+      if (chunk.error !== undefined) {
+        yield {
+          type: "error",
+          data: chunk.error,
+        };
+      }
+    } catch {}
+  }
+}
+
+/**
+ * Transform raw source data from streaming response to SearchResultItem[]
+ */
+export function parseStreamSources(data: string): SearchResultItem[] {
+  try {
+    const rawSources = JSON.parse(data);
+    if (!Array.isArray(rawSources)) {
+      return [];
+    }
+    return rawSources.map((source: { content?: string }) => {
+      const rawContent = source.content ?? "";
+      const parsed = parseSourceContent(rawContent);
+      return {
+        content: parsed.content,
+        filePath: parsed.filePath,
+      };
+    });
+  } catch {
+    return [];
   }
 }

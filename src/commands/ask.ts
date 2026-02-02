@@ -1,8 +1,17 @@
 import type { AskFlags } from "../index.js";
 import { withContext } from "../lib/command-context.js";
-import { NiaApiError, searchLocalFolders } from "../lib/nia.js";
+import {
+  NiaApiError,
+  searchLocalFolders,
+  searchLocalFoldersStream,
+} from "../lib/nia.js";
 import { runNiaOnce } from "../lib/nia-sync.js";
-import { error, formatSearchResults, success } from "../lib/output.js";
+import {
+  error,
+  formatSearchResults,
+  streamSearchResults,
+  success,
+} from "../lib/output.js";
 
 /**
  * Search query command
@@ -60,19 +69,26 @@ export const askCommand = withContext(
     }
 
     // Perform search
-    const folderCount = selectedFolders.length;
-    console.log(
-      `Searching ${folderCount} folder${folderCount === 1 ? "" : "s"}...\n`,
-    );
-
     try {
-      const result = await searchLocalFolders(
-        ctx.niaSyncConfig.api_key,
-        query.trim(),
-        selectedFolders,
-        flags.sources,
-      );
-      console.log(formatSearchResults(result, flags.sources));
+      if (flags.noStream) {
+        // Non-streaming mode (original behavior)
+        const result = await searchLocalFolders(
+          ctx.niaSyncConfig.api_key,
+          query.trim(),
+          selectedFolders,
+          flags.sources,
+        );
+        console.log(formatSearchResults(result, flags.sources));
+      } else {
+        // Streaming mode (default)
+        const stream = searchLocalFoldersStream(
+          ctx.niaSyncConfig.api_key,
+          query.trim(),
+          selectedFolders,
+          flags.sources,
+        );
+        await streamSearchResults(stream, flags.sources);
+      }
     } catch (err) {
       if (err instanceof NiaApiError) {
         console.log(error(err.message));

@@ -13,6 +13,7 @@ export interface AskFlags {
   limit?: number;
   sync?: boolean;
   sources?: boolean;
+  noStream?: boolean;
 }
 
 const cli = meow(
@@ -32,6 +33,7 @@ const cli = meow(
     -l, --limit <n>    Max results (default: 5)
     -s, --sync         Sync folders before searching
     -S, --sources      Include source citations in output
+    --no-stream        Disable streaming (wait for full response)
 
   Options for 'config'
     --reset           Delete configuration file
@@ -68,6 +70,10 @@ const cli = meow(
         type: "boolean",
         shortFlag: "S",
       },
+      noStream: {
+        type: "boolean",
+        default: false,
+      },
       reset: {
         type: "boolean",
       },
@@ -103,6 +109,7 @@ async function main(): Promise<void> {
         limit: cli.flags.limit,
         sync: cli.flags.sync,
         sources: cli.flags.sources,
+        noStream: cli.flags.noStream,
       };
       await askCommand(query, askFlags);
       break;
