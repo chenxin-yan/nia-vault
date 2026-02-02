@@ -1,4 +1,5 @@
 import figures from "@inquirer/figures";
+import { renderMarkdown } from "./markdown.js";
 import type { SearchResult } from "./nia";
 import type { LocalFolder } from "./nia-sync";
 
@@ -15,9 +16,9 @@ export function formatSearchResults(
 
   const lines: string[] = [];
 
-  // Show AI-generated answer if available
+  // Show AI-generated answer if available (rendered as markdown)
   if (result.answer) {
-    lines.push(result.answer);
+    lines.push(renderMarkdown(result.answer));
   }
 
   // Show sources only if flag is enabled and sources exist
