@@ -1,6 +1,6 @@
-import { access, mkdir, readFile, unlink, writeFile } from "fs/promises";
-import { homedir } from "os";
-import { dirname, join } from "path";
+import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 import z from "zod";
 
 // nia-vault configuration (stored in ~/.config/nia-vault/config.json)

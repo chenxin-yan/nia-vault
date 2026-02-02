@@ -1,7 +1,7 @@
-import { spawn } from "child_process";
-import { readFile } from "fs/promises";
-import { homedir } from "os";
-import { join } from "path";
+import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import z from "zod";
 
 // nia-sync configuration (read from ~/.nia-sync/config.json)
