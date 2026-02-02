@@ -1,91 +1,70 @@
 import { checkbox } from "@inquirer/prompts";
-import { getVaultConfigPath, saveSelectedFolders } from "../lib/config.js";
-import { listLocalFolders, NiaApiError } from "../lib/nia.js";
+import { withContext } from "../lib/command-context.js";
+import { CONFIG_PATH, updateVaultConfig } from "../lib/config.js";
 import {
-  getApiKey,
-  getNiaSyncConfigPath,
-  isNiaSyncConfigured,
+  type LocalFolder,
+  listLocalFolders,
+  NIA_SYNC_CONFIG_PATH,
 } from "../lib/nia-sync.js";
+import { error, success } from "../lib/output.js";
 
 /**
  * Interactive setup wizard for nia-vault
  * Checks for nia-sync credentials and allows folder selection
  */
-export async function initCommand(): Promise<void> {
-  console.log("\nWelcome to nia-vault!\n");
+export const initCommand = withContext(
+  { requiresNiaSync: true },
+  async (): Promise<void> => {
+    console.log("\nWelcome to nia-vault!\n");
+    console.log(
+      `${success(`Found nia-sync config at ${NIA_SYNC_CONFIG_PATH}`)}\n`,
+    );
 
-  // Step 1: Check for nia-sync configuration
-  console.log("Checking for nia-sync configuration...");
+    // Fetch folders from nia-sync CLI
+    console.log("Fetching synced folders...");
 
-  const niaSyncConfigured = await isNiaSyncConfigured();
-
-  if (!niaSyncConfigured) {
-    console.log(`✗ No nia-sync config found at ${getNiaSyncConfigPath()}\n`);
-    console.log("Please set up nia-sync first:");
-    console.log("  1. pip install nia-sync");
-    console.log("  2. nia login");
-    console.log("  3. nia add ~/path/to/notes");
-    console.log("  4. Run 'vault init' again\n");
-    process.exit(1);
-  }
-
-  console.log(`✓ Found API key in ${getNiaSyncConfigPath()}\n`);
-
-  // Step 2: Get API key and fetch folders
-  const apiKey = await getApiKey();
-
-  if (!apiKey) {
-    console.log("✗ Could not read API key from nia-sync config\n");
-    process.exit(1);
-  }
-
-  console.log("Fetching synced folders...");
-
-  let folders;
-  try {
-    folders = await listLocalFolders(apiKey);
-  } catch (error) {
-    if (error instanceof NiaApiError) {
-      console.log(`✗ ${error.message}\n`);
-    } else {
-      console.log(
-        "✗ Could not connect to Nia API. Check your internet connection.\n",
-      );
+    let folders: LocalFolder[];
+    try {
+      folders = await listLocalFolders();
+    } catch (err) {
+      console.log(error((err as Error).message));
+      process.exit(1);
     }
-    process.exit(1);
-  }
 
-  if (folders.length === 0) {
+    if (folders.length === 0) {
+      console.log(
+        error("No synced folders found. Run 'nia add ~/path' to add folders."),
+      );
+      process.exit(1);
+    }
+
     console.log(
-      "✗ No synced folders found. Run 'nia add ~/path' to add folders.\n",
+      success(
+        `Found ${folders.length} synced folder${folders.length === 1 ? "" : "s"}`,
+      ),
     );
-    process.exit(1);
-  }
 
-  console.log(
-    `✓ Found ${folders.length} synced folder${folders.length === 1 ? "" : "s"}\n`,
-  );
+    // Present folder selection
+    const selectedFolderIds = await checkbox<string>({
+      message: "Select folders to include in searches:",
+      choices: folders.map((folder) => ({
+        name: `${folder.name.padEnd(20)} ${folder.path}`,
+        value: folder.id,
+        checked: true,
+      })),
+    });
 
-  // Step 3: Present folder selection
-  const selectedFolderIds = await checkbox<string>({
-    message: "Select folders to include in searches:",
-    choices: folders.map((folder) => ({
-      name: `${folder.name.padEnd(20)} ${folder.path}`,
-      value: folder.id,
-      checked: true,
-    })),
-  });
+    if (selectedFolderIds.length === 0) {
+      console.log(
+        error("No folders selected. Run 'vault init' again to select folders."),
+      );
+      process.exit(1);
+    }
 
-  if (selectedFolderIds.length === 0) {
-    console.log(
-      "\n✗ No folders selected. Run vault init again to select folders.\n",
-    );
-    process.exit(1);
-  }
+    // Save configuration
+    await updateVaultConfig({ selectedFolders: selectedFolderIds });
 
-  // Step 4: Save configuration
-  await saveSelectedFolders(selectedFolderIds);
-
-  console.log(`\n✓ Configuration saved to ${getVaultConfigPath()}\n`);
-  console.log('You\'re all set! Try: vault ask "your question here"\n');
-}
+    console.log(`\n${success(`Configuration saved to ${CONFIG_PATH}`)}\n`);
+    console.log('You\'re all set! Try: vault ask "your question here"\n');
+  },
+);
