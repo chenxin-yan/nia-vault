@@ -1,6 +1,6 @@
 {
   "name": "nia-vault",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CLI app for querying local notes via Nia semantic search",
   "type": "module",
   "bin": {
