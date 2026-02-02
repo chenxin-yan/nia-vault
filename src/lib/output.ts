@@ -2,9 +2,6 @@ import figures from "@inquirer/figures";
 import type { SearchResult } from "./nia";
 import type { LocalFolder } from "./nia-sync";
 
-// Separator line for search results
-const SEPARATOR = figures.lineBold.repeat(42);
-
 /**
  * Format search results for display
  */
@@ -23,12 +20,11 @@ export function formatSearchResults(result: SearchResult): string {
   }
 
   for (const item of result.sources) {
-    lines.push(SEPARATOR);
-    lines.push(`📄 ${item.filePath ?? "Unknown source"}`);
-    lines.push(SEPARATOR);
-    lines.push(item.content);
-    lines.push("");
+    if (item.filePath) {
+      lines.push(`  📄 ${item.filePath}`);
+    }
   }
+  lines.push("");
 
   lines.push(`Found ${result.total} result${result.total === 1 ? "" : "s"}`);
 
