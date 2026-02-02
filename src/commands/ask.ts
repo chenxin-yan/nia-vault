@@ -1,104 +1,88 @@
-import { configExists, getSelectedFolders } from "../lib/config.js";
+import type { AskFlags } from "../index.js";
+import { withContext } from "../lib/command-context.js";
 import { NiaApiError, searchLocalFolders } from "../lib/nia.js";
-import { getApiKey, isNiaSyncConfigured, runNiaOnce } from "../lib/nia-sync.js";
-import { formatSearchResults } from "../lib/output.js";
-import type { AskFlags } from "../types.js";
+import { runNiaOnce } from "../lib/nia-sync.js";
+import { error, formatSearchResults, success } from "../lib/output.js";
 
 /**
  * Search query command
  * Queries notes using semantic search via Nia API
  */
-export async function askCommand(
-  query: string,
-  flags: AskFlags,
-): Promise<void> {
-  // Validate query
-  if (!query || query.trim().length === 0) {
-    console.log(
-      '✗ Please provide a search query. Usage: vault ask "your question"\n',
-    );
-    process.exit(1);
-  }
-
-  // Check for nia-sync configuration
-  const niaSyncConfigured = await isNiaSyncConfigured();
-  if (!niaSyncConfigured) {
-    console.log(`✗ nia-sync not configured. Run 'nia login' first.\n`);
-    process.exit(1);
-  }
-
-  // Check for vault configuration
-  const hasConfig = await configExists();
-  if (!hasConfig) {
-    console.log("✗ No configuration found. Run 'vault init' to get started.\n");
-    process.exit(1);
-  }
-
-  // Get API key
-  const apiKey = await getApiKey();
-  if (!apiKey) {
-    console.log("✗ Could not read API key from nia-sync config.\n");
-    process.exit(1);
-  }
-
-  // Get selected folders
-  let selectedFolders = await getSelectedFolders();
-
-  if (selectedFolders.length === 0) {
-    console.log(
-      "✗ No folders selected for search. Run 'vault folders add' to select folders.\n",
-    );
-    process.exit(1);
-  }
-
-  // Filter to specific folder if --folder flag is provided
-  if (flags.folder) {
-    if (!selectedFolders.includes(flags.folder)) {
+export const askCommand = withContext(
+  { requiresNiaSync: true, requiresVaultConfig: true },
+  async (ctx, query: string, flags: AskFlags): Promise<void> => {
+    // Validate query
+    if (!query?.trim()) {
       console.log(
-        `✗ Folder '${flags.folder}' is not in your selected folders.\n`,
+        error(
+          'Please provide a search query. Usage: vault ask "your question"',
+        ),
       );
-      console.log("Run 'vault folders' to see available folders.\n");
       process.exit(1);
     }
-    selectedFolders = [flags.folder];
-  }
 
-  // Run sync if --sync flag is provided
-  if (flags.sync) {
-    console.log("Syncing folders...");
-    const syncSuccess = await runNiaOnce();
-    if (syncSuccess) {
-      console.log("✓ Sync complete\n");
-    } else {
-      console.log("✗ Sync failed. Make sure 'nia' command is available.\n");
+    // Validate folders exist
+    let selectedFolders = ctx.vaultConfig.selectedFolders;
+    if (selectedFolders.length === 0) {
+      console.log(
+        error(
+          "No folders selected for search. Run 'vault folders' to select folders.",
+        ),
+      );
       process.exit(1);
     }
-  }
 
-  // Perform search
-  const folderCount = selectedFolders.length;
-  console.log(
-    `Searching ${folderCount} folder${folderCount === 1 ? "" : "s"}...\n`,
-  );
-
-  const limit = flags.limit ?? 5;
-
-  try {
-    const result = await searchLocalFolders(
-      apiKey,
-      query.trim(),
-      selectedFolders,
-      limit,
-    );
-    console.log(formatSearchResults(result));
-  } catch (error) {
-    if (error instanceof NiaApiError) {
-      console.log(`✗ ${error.message}\n`);
-    } else {
-      console.log(
-        "✗ Could not connect to Nia API. Check your internet connection.\n",
-      );
+    // Filter to specific folder if --folder flag provided
+    if (flags.folder) {
+      if (!selectedFolders.includes(flags.folder)) {
+        console.log(
+          error(
+            `Folder '${flags.folder}' is not in your selected folders.\nRun 'vault folders' to see available folders.`,
+          ),
+        );
+        process.exit(1);
+      }
+      selectedFolders = [flags.folder];
     }
-    process.exit(1);
-  }
-}
+
+    // Run sync if --sync flag is provided
+    if (flags.sync) {
+      console.log("Syncing folders...");
+      const syncSuccess = await runNiaOnce();
+      if (syncSuccess) {
+        console.log(success("Sync complete"));
+      } else {
+        console.log(
+          error("Sync failed. Make sure 'nia' command is available."),
+        );
+        process.exit(1);
+      }
+    }
+
+    // Perform search
+    const folderCount = selectedFolders.length;
+    console.log(
+      `Searching ${folderCount} folder${folderCount === 1 ? "" : "s"}...\n`,
+    );
+
+    try {
+      const result = await searchLocalFolders(
+        ctx.niaSyncConfig.api_key,
+        query.trim(),
+        selectedFolders,
+      );
+      console.log(formatSearchResults(result));
+    } catch (err) {
+      if (err instanceof NiaApiError) {
+        console.log(error(err.message));
+      } else {
+        console.log(
+          error(
+            "Could not connect to Nia API. Check your internet connection.",
+          ),
+        );
+      }
+      process.exit(1);
+    }
+  },
+);
