@@ -228,10 +228,11 @@ run_agent() {
     # Run agent and capture output, also display in real-time
     # The prompt is passed as the LAST argument to the agent command
     # Output goes to: terminal (real-time), temp file (for signal detection), and log file
+    # OPENCODE_PERMISSION enables fully autonomous mode (auto-approve all permissions)
     if [[ -n "$RALPH_LOG_FILE" ]]; then
-        $agent_cmd "$prompt" 2>&1 | tee "$output_file" | tee -a "$RALPH_LOG_FILE"
+        OPENCODE_PERMISSION='{"*":"allow"}' $agent_cmd "$prompt" 2>&1 | tee "$output_file" | tee -a "$RALPH_LOG_FILE"
     else
-        $agent_cmd "$prompt" 2>&1 | tee "$output_file"
+        OPENCODE_PERMISSION='{"*":"allow"}' $agent_cmd "$prompt" 2>&1 | tee "$output_file"
     fi
     local agent_exit_code=${PIPESTATUS[0]}
     
