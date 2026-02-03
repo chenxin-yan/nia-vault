@@ -72,9 +72,9 @@ const cli = meow(
         type: "boolean",
         shortFlag: "S",
       },
-      noStream: {
+      stream: {
         type: "boolean",
-        default: false,
+        default: true,
       },
       plain: {
         type: "boolean",
@@ -115,7 +115,7 @@ async function main(): Promise<void> {
         limit: cli.flags.limit,
         sync: cli.flags.sync,
         sources: cli.flags.sources,
-        noStream: cli.flags.noStream,
+        noStream: !cli.flags.stream,
         plain: cli.flags.plain,
       };
       await askCommand(query, askFlags);
