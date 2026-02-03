@@ -1,8 +1,20 @@
 # Nia-Vault MVP Spec
 
+> A CLI tool for semantic search across local note collections using Nia's AI-powered indexing.
+
 ## Overview
 
 **nia-vault** is a CLI application that enables users to query their local notes/files (e.g., Obsidian vaults, markdown directories) using AI-powered semantic search via Nia.
+
+### The Problem
+
+Users with large personal knowledge bases (Obsidian vaults, markdown wikis, etc.) struggle to find relevant information using keyword-based search. Traditional tools like grep or Obsidian's built-in search miss semantically similar content—if you ask "What's my vacation policy?" you won't find notes titled "Time Off Guidelines" or "PTO Request Process."
+
+### The Solution
+
+nia-vault bridges this gap by leveraging Nia's semantic search API—trained on your actual notes via nia-sync. Ask natural questions, get results based on meaning, not keywords.
+
+---
 
 ## Summary of Decisions
 
@@ -12,7 +24,6 @@
 | CLI command     | `vault`                                                  |
 | Nia Sync        | Required prerequisite (user installs separately)         |
 | API key storage | Reuse from `~/.nia-sync/config.json`, fallback to prompt |
-| Output format   | Plain text (MVP)                                         |
 | Error handling  | Friendly messages with actionable instructions           |
 
 ---
@@ -70,9 +81,6 @@ nia-vault/
 │   └── types.ts           # TypeScript types
 ├── package.json
 ├── tsconfig.json
-├── tasks.json             # Task tracking for agentic workflow
-├── docs/
-│   └── spec.md            # This spec
 └── README.md
 ```
 
@@ -210,8 +218,6 @@ $ vault config --reset
 ✓ Config file deleted. Run 'vault init' to reconfigure.
 ```
 
----
-
 ## Configuration
 
 ### nia-sync Config (read-only)
@@ -239,169 +245,3 @@ We read this file to get the API key. We never write to it.
 **Note:** We no longer store the API key in nia-vault config. We always read it from nia-sync.
 
 **Permissions:** Created with mode `0600` (user read/write only)
-
----
-
-## Nia API Integration
-
-### Endpoints Used
-
-| Endpoint                                     | Purpose                                        |
-| -------------------------------------------- | ---------------------------------------------- |
-| `GET /data-sources?source_type=local_folder` | List synced local folders                      |
-| `POST /search/query`                         | Semantic search with `local_folders` parameter |
-
-### Base URL
-
-```
-https://apigcp.trynia.ai/v2
-```
-
-### Authentication
-
-Bearer token in `Authorization` header:
-
-```
-Authorization: Bearer <NIA_API_KEY>
-```
-
-### API Client Functions
-
-```typescript
-// List all synced local folders from Nia
-async function listLocalFolders(apiKey: string): Promise<LocalFolder[]>;
-
-// Search across selected folders
-async function searchLocalFolders(
-  apiKey: string,
-  query: string,
-  folderIds: string[]
-): Promise<SearchResult>;
-```
-
----
-
-## Error Handling
-
-Friendly messages with clear next steps:
-
-| Error                | Message                                                                        |
-| -------------------- | ------------------------------------------------------------------------------ |
-| No nia-sync config   | `nia-sync not configured. Run 'nia login' first.`                              |
-| No vault config      | `No configuration found. Run 'vault init' to get started.`                     |
-| Invalid API key      | `Invalid API key. Run 'nia login' to re-authenticate.`                         |
-| No folders synced    | `No synced folders found. Run 'nia add ~/path' to add folders.`                |
-| No folders selected  | `No folders selected for search. Run 'vault folders add' to select folders.`   |
-| Network error        | `Could not connect to Nia API. Check your internet connection.`                |
-| Empty search results | `No results found. Try a different query or check if your folders are synced.` |
-
----
-
-## Build & Distribution
-
-### Runtime Strategy
-
-**Approach:** Compile to Node-compatible JavaScript with `#!/usr/bin/env node` shebang.
-
-This allows the CLI to work with **both Node and Bun** automatically:
-
-- Users who install via `bun install -g nia-vault` → runs with Bun
-- Users who install via `npm install -g nia-vault` → runs with Node
-- No runtime detection code needed - determined by user's environment
-
-**Requirements:** User must have Node.js (v18+) or Bun installed.
-
-### Build Command
-
-```bash
-bun build ./src/index.ts --outdir ./dist --target node --format esm
-```
-
-**Important:** The entry file (`src/index.ts`) must include the shebang:
-
-```typescript
-#!/usr/bin/env node
-// ... rest of the code
-```
-
-After building, ensure the shebang is preserved in `dist/index.js`:
-
-```javascript
-#!/usr/bin/env node
-// bundled code...
-```
-
-### package.json Configuration
-
-```json
-{
-  "name": "nia-vault",
-  "version": "0.1.0",
-  "type": "module",
-  "bin": {
-    "vault": "./dist/index.js"
-  },
-  "files": ["dist"],
-  "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target node --format esm",
-    "dev": "bun run ./src/index.ts"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
-}
-```
-
-### npm Publishing
-
-```bash
-# Build first
-bun run build
-
-# Publish
-npm publish
-```
-
-### Installation
-
-Users install via:
-
-```bash
-# With npm (runs with Node)
-npm install -g nia-vault
-
-# With Bun (runs with Bun)
-bun install -g nia-vault
-
-# With pnpm
-pnpm install -g nia-vault
-```
-
-After installation, the `vault` command is available globally.
-
----
-
-## Prerequisites for Users
-
-Before using nia-vault, users must:
-
-1. **Install nia-sync**
-
-   ```bash
-   pip install nia-sync
-   ```
-
-2. **Authenticate with Nia**
-
-   ```bash
-   nia login
-   ```
-
-3. **Add folders to sync**
-
-   ```bash
-   nia add ~/Documents/notes
-   nia start
-   ```
-
-That's it! No separate API key needed - nia-vault reuses nia-sync credentials.

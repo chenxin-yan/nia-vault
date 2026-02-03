@@ -1,0 +1,125 @@
+{
+  "tasks": [
+    {
+      "description": "Create custom markdown parser that tokenizes markdown text into structured tokens",
+      "subtasks": [
+        "Create src/lib/markdown-parser.ts with MarkdownToken type (header, bold, italic, code_block, inline_code, list_item, link, blockquote, paragraph, text)",
+        "Implement tokenize() function that parses markdown string into token array",
+        "Handle headers (# through ######) with level detection",
+        "Handle bold (**text** and __text__) and italic (*text* and _text_) including nested combinations",
+        "Handle fenced code blocks (```language\\ncode\\n```) with optional language detection",
+        "Handle inline code (`code`) within text",
+        "Handle unordered lists (- item, * item) and ordered lists (1. item) with proper indentation",
+        "Handle links [text](url) preserving both text and URL",
+        "Handle blockquotes (> text) including multi-line",
+        "Handle plain text paragraphs (text separated by blank lines)",
+        "Write unit tests in tests/markdown-parser.test.ts covering all token types",
+        "Run bun test to verify all tests pass"
+      ],
+      "notes": "Use regex-based line-by-line parsing. Token structure should include: type, content, and metadata (level for headers, language for code blocks, url for links). Consider edge cases like nested formatting and escaped characters.",
+      "passed": false
+    },
+    {
+      "description": "Implement chalk-based markdown renderer and replace marked/marked-terminal packages",
+      "subtasks": [
+        "Run bun remove marked marked-terminal to uninstall old packages",
+        "Run bun add chalk to install chalk",
+        "Create src/lib/markdown-renderer.ts that imports chalk and markdown-parser",
+        "Implement renderToken() function that converts a single token to chalk-styled string",
+        "Style headers: h1 bold + underline, h2 bold, h3-h6 bold dim with decreasing emphasis",
+        "Style bold text with chalk.bold(), italic with chalk.italic()",
+        "Style code blocks with chalk.bgGray() or dim background, include language label if present",
+        "Style inline code with chalk.cyan() or similar distinguishing color",
+        "Style list items with proper indentation and bullet/number prefixes",
+        "Style links showing [text](url) with chalk.blue.underline() for URL",
+        "Style blockquotes with chalk.dim() and │ prefix character",
+        "Implement renderMarkdown(text: string): string that tokenizes and renders all tokens",
+        "Update src/lib/markdown.ts to use new renderer (or replace file entirely)",
+        "Verify existing imports in src/lib/output.ts still work with new renderMarkdown",
+        "Run bun run check:types to ensure no type errors",
+        "Test rendering manually with various markdown inputs"
+      ],
+      "notes": "Use chalk's chainable API for combining styles. Handle terminal width for text wrapping if needed (process.stdout.columns). Consider NO_COLOR environment variable - chalk handles this automatically. The lazy singleton pattern can be removed since chalk doesn't need initialization.",
+      "passed": false
+    },
+    {
+      "description": "Migrate ask command from Nia HTTP API to nia search CLI subprocess",
+      "subtasks": [
+        "Create runNiaSearch() function in src/lib/nia-sync.ts that spawns 'nia search' with arguments",
+        "Accept parameters: query (string), folderIds (string[]), options ({ sources?: boolean, noMarkdown?: boolean, noStream?: boolean, json?: boolean })",
+        "Build CLI args array: ['search', query, ...folderIds.flatMap(id => ['--local-folder', id]), ...flags]",
+        "For streaming mode (default): spawn process and pipe stdout directly to process.stdout",
+        "For non-streaming mode (--no-stream): capture stdout and return as string",
+        "Handle stderr for error messages, throw NiaSyncError on non-zero exit",
+        "Update src/commands/ask.ts to use runNiaSearch() instead of searchLocalFolders/searchLocalFoldersStream",
+        "Remove API key passing since nia CLI handles auth internally",
+        "Update streamSearchResults() in output.ts or simplify since CLI handles markdown rendering",
+        "Remove src/lib/nia.ts file entirely (API client no longer needed)",
+        "Run bun remove fetch-event-stream to uninstall unused package",
+        "Update src/lib/command-context.ts: remove requiresNiaSync API key requirement if no longer needed",
+        "Test streaming search: vault ask 'test query' - verify output streams",
+        "Test non-streaming: vault ask 'test query' --no-stream - verify output appears after completion",
+        "Test with sources: vault ask 'test query' --sources - verify sources displayed",
+        "Run bun run check:types to ensure no type errors"
+      ],
+      "notes": "The nia search CLI already handles streaming, markdown rendering, and sources display. The main change is delegating to subprocess instead of making HTTP requests. Use spawn() from node:child_process or Bun subprocess API. Consider using Bun.spawn() per AGENT.md preferences.",
+      "passed": false
+    },
+    {
+      "description": "Add --plain flag to output raw text without markdown rendering",
+      "subtasks": [
+        "Add 'plain' flag to meow flags config in src/index.ts: { type: 'boolean', shortFlag: 'p' }",
+        "Add plain?: boolean to AskFlags interface",
+        "Pass cli.flags.plain to askCommand in the switch case",
+        "Update askCommand in src/commands/ask.ts to check flags.plain",
+        "When plain is true, pass --no-markdown flag to nia search CLI call",
+        "When plain is true, output raw CLI result directly without any post-processing",
+        "Update CLI help text to document --plain flag: '-p, --plain  Output raw text without markdown formatting'",
+        "Test: vault ask 'query' --plain - verify raw text output without formatting",
+        "Test: vault ask 'query' (without --plain) - verify markdown rendering still works",
+        "Run bun run check:types to ensure no type errors"
+      ],
+      "notes": "This flag passes --no-markdown to nia search and outputs the raw result. The implementation should be straightforward since nia search already supports --no-markdown.",
+      "passed": false
+    },
+    {
+      "description": "Create find command with interactive file picker to open files with EDITOR",
+      "subtasks": [
+        "Create src/commands/find.ts with findCommand function",
+        "Use withContext HOF with { requiresNiaSync: true, requiresVaultConfig: true }",
+        "Accept query string parameter from CLI args",
+        "Call nia search with --json flag to get structured output with source paths",
+        "Parse JSON response to extract source file paths array",
+        "If no sources found, show 'No matching files found' message and exit",
+        "If sources found, use @inquirer/prompts select() to show interactive picker",
+        "Display file paths as choices, let user navigate with arrow keys",
+        "On selection, get the selected file path",
+        "Check if EDITOR or VISUAL environment variable is set, fallback to 'vi' or 'nano'",
+        "Spawn editor subprocess with selected file path: spawn(editor, [filePath], { stdio: 'inherit' })",
+        "Handle case where file path from Nia is relative - resolve against folder path if needed",
+        "Add 'find' command to switch statement in src/index.ts main()",
+        "Update CLI help text with find command documentation",
+        "Test: vault find 'meeting notes' - verify picker shows and editor opens on selection",
+        "Run bun run check:types to ensure no type errors"
+      ],
+      "notes": "Use @inquirer/prompts select() for the interactive picker (already a dependency). The EDITOR env var is standard on Unix systems. Handle edge cases: no EDITOR set (show helpful error), file doesn't exist locally (source might be virtual path from database). Consider showing file preview or just path.",
+      "passed": false
+    },
+    {
+      "description": "Update documentation for new features and changed behavior",
+      "subtasks": [
+        "Update README.md Commands section to add 'vault find' command documentation",
+        "Add find command to Commands table: vault find <query> - Find files and open in editor",
+        "Document find command usage example: vault find 'meeting notes from last week'",
+        "Update Options for 'ask' table to include: -p, --plain  Output raw text without markdown",
+        "Update any references to streaming behavior if implementation changed",
+        "Review and update Troubleshooting section if any error messages changed",
+        "Add note that nia-sync must be installed for CLI commands (if not already present)",
+        "Verify all existing documentation is still accurate after changes",
+        "Run through Quick Start section to ensure examples still work"
+      ],
+      "notes": "Keep documentation concise and consistent with existing style. Focus on user-facing changes only - internal implementation details don't need documentation.",
+      "passed": false
+    }
+  ]
+}
