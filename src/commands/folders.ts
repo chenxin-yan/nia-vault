@@ -2,7 +2,7 @@ import { checkbox } from "@inquirer/prompts";
 import { withContext } from "../lib/command-context.js";
 import { updateVaultConfig } from "../lib/config.js";
 import { type LocalFolder, listLocalFolders } from "../lib/nia-sync.js";
-import { error, formatFolderList, success } from "../lib/output.js";
+import { error, success } from "../lib/output.js";
 
 /**
  * Folders command
@@ -30,10 +30,6 @@ export const foldersCommand = withContext(
 
     // Get currently selected folders
     const selectedIds = ctx.vaultConfig.selectedFolders;
-
-    // Display current status
-    console.log(formatFolderList(folders, selectedIds));
-    console.log("");
 
     // Present checkbox with pre-selected folders
     const newSelectedIds = await checkbox<string>({
