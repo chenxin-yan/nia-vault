@@ -80,7 +80,7 @@
         "Run bun run check:types to ensure no type errors"
       ],
       "notes": "This flag passes --no-markdown to nia search and outputs the raw result. The implementation should be straightforward since nia search already supports --no-markdown. In the updated ask.ts, pass `noMarkdown: flags.plain` to runNiaSearch() options. The runNiaSearch function already supports the noMarkdown option.",
-      "passed": false
+      "passed": true
     },
     {
       "description": "Create find command with interactive file picker to open files with EDITOR",

@@ -64,6 +64,7 @@ export const askCommand = withContext(
       const result = await runNiaSearch(query.trim(), selectedFolders, {
         sources: flags.sources,
         noStream: flags.noStream,
+        noMarkdown: flags.plain,
       });
 
       // In non-streaming mode, print the captured output

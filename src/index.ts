@@ -14,6 +14,7 @@ export interface AskFlags {
   sync?: boolean;
   sources?: boolean;
   noStream?: boolean;
+  plain?: boolean;
 }
 
 const cli = meow(
@@ -32,6 +33,7 @@ const cli = meow(
     -f, --folder <id>  Search specific folder only
     -s, --sync         Sync folders before searching
     -S, --sources      Include source citations in output
+    -p, --plain        Output raw text without markdown formatting
     --no-stream        Disable streaming (wait for full response)
 
   Options for 'config'
@@ -72,6 +74,10 @@ const cli = meow(
         type: "boolean",
         default: false,
       },
+      plain: {
+        type: "boolean",
+        shortFlag: "p",
+      },
       reset: {
         type: "boolean",
       },
@@ -108,6 +114,7 @@ async function main(): Promise<void> {
         sync: cli.flags.sync,
         sources: cli.flags.sources,
         noStream: cli.flags.noStream,
+        plain: cli.flags.plain,
       };
       await askCommand(query, askFlags);
       break;

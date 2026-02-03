@@ -144,3 +144,37 @@
 - To test streaming: `vault ask 'test query'` (output streams in real-time)
 - To test non-streaming: `vault ask 'test query' --no-stream` (output appears after completion)
 - To test with sources: `vault ask 'test query' --sources` (file paths shown after response)
+
+---
+
+## Task: Add --plain flag to output raw text without markdown rendering
+
+### Completed
+
+- Added `plain` flag to meow flags config in `src/index.ts` with `type: 'boolean'` and `shortFlag: 'p'`
+- Added `plain?: boolean` to `AskFlags` interface
+- Added `plain: cli.flags.plain` to the askFlags object passed to askCommand
+- Updated `askCommand` in `src/commands/ask.ts` to pass `noMarkdown: flags.plain` to `runNiaSearch()` options
+- Updated CLI help text to document the new flag: `-p, --plain  Output raw text without markdown formatting`
+- All 36 tests pass (`bun test`)
+- Type checks pass (`bun run check:types`)
+- Verified help text displays the new flag correctly
+
+### Files Changed
+
+- `src/index.ts` - added plain flag to AskFlags interface, meow flags config, help text, and askFlags object
+- `src/commands/ask.ts` - added `noMarkdown: flags.plain` to runNiaSearch() options
+
+### Decisions
+
+- Used `-p` as the short flag for `--plain` (memorable: p for plain)
+- The flag simply passes `--no-markdown` to the underlying `nia search` CLI command
+- No additional post-processing needed - when `--plain` is set, the raw text from nia search is output directly
+
+### Notes for Future Agent
+
+- The `--plain` flag works with both streaming and non-streaming modes
+- When `--plain` is true, it sets `noMarkdown: true` in the options passed to `runNiaSearch()`, which adds `--no-markdown` flag to the nia search CLI call
+- The nia CLI handles the markdown vs plain text rendering - we just pass through the option
+- To test: `vault ask 'query' --plain` or `vault ask 'query' -p` should output raw text without markdown formatting
+- The implementation was straightforward because the `runNiaSearch()` function already supported the `noMarkdown` option from Task 3
