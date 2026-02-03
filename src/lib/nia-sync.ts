@@ -1,8 +1,23 @@
-import { spawn } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import z from "zod";
+
+// ============================================================================
+// Options for nia search CLI command
+// ============================================================================
+
+export interface NiaSearchOptions {
+  /** Include source citations in output */
+  sources?: boolean;
+  /** Disable markdown rendering in CLI output */
+  noMarkdown?: boolean;
+  /** Disable streaming (wait for full response) */
+  noStream?: boolean;
+  /** Output in JSON format */
+  json?: boolean;
+}
 
 // nia-sync configuration (read from ~/.nia-sync/config.json)
 export const NiaSyncConfig = z.object({
@@ -172,4 +187,111 @@ export async function listLocalFolders(): Promise<LocalFolder[]> {
       `Failed to list local folders: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+// ============================================================================
+// Nia Search CLI Command
+// ============================================================================
+
+/**
+ * Run `nia search` command to query notes using semantic search
+ *
+ * Spawns the nia CLI with the search command and appropriate arguments.
+ * Supports both streaming (default) and non-streaming modes.
+ *
+ * In streaming mode: pipes stdout directly to process.stdout for real-time output
+ * In non-streaming mode: captures stdout and returns the full output as a string
+ *
+ * @param query - Natural language search query
+ * @param folderIds - Array of local folder IDs to search
+ * @param options - Search options (sources, noMarkdown, noStream, json)
+ * @returns In streaming mode: resolves when complete, returns empty string
+ *          In non-streaming mode: resolves with the captured output
+ *
+ * @throws NiaSyncError if nia CLI is not found or exits with non-zero code
+ */
+export async function runNiaSearch(
+  query: string,
+  folderIds: string[],
+  options: NiaSearchOptions = {},
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Build CLI args: nia search <query> [--local-folder <id>]... [flags]
+    const args: string[] = ["search", query];
+
+    // Add folder arguments
+    for (const folderId of folderIds) {
+      args.push("--local-folder", folderId);
+    }
+
+    // Add optional flags
+    if (options.sources) {
+      args.push("--sources");
+    }
+    if (options.noMarkdown) {
+      args.push("--no-markdown");
+    }
+    if (options.noStream) {
+      args.push("--no-stream");
+    }
+    if (options.json) {
+      args.push("--json");
+      // JSON mode is incompatible with streaming and markdown rendering in nia CLI
+      // Ensure we disable both to avoid CLI validation errors
+      if (!options.noStream) {
+        args.push("--no-stream");
+      }
+      if (!options.noMarkdown) {
+        args.push("--no-markdown");
+      }
+    }
+
+    // Determine streaming vs non-streaming mode
+    const isStreaming = !options.noStream && !options.json;
+
+    let stdout = "";
+    let stderr = "";
+
+    const proc: ChildProcess = spawn("nia", args, {
+      stdio: isStreaming
+        ? ["ignore", "inherit", "pipe"] // Stream stdout directly to terminal
+        : ["ignore", "pipe", "pipe"], // Capture stdout
+    });
+
+    // Capture stdout in non-streaming mode
+    if (!isStreaming && proc.stdout) {
+      proc.stdout.on("data", (data: Buffer) => {
+        stdout += data.toString();
+      });
+    }
+
+    // Always capture stderr for error messages
+    if (proc.stderr) {
+      proc.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+    }
+
+    proc.on("close", (code) => {
+      if (code === 0) {
+        resolve(stdout);
+      } else {
+        reject(
+          new NiaSyncError(stderr || `nia search exited with code ${code}`),
+        );
+      }
+    });
+
+    proc.on("error", (err) => {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+        reject(
+          new NiaSyncError(
+            "nia-sync CLI not found. Install it with: pip install nia-sync",
+          ),
+        );
+      } else {
+        reject(new NiaSyncError(`Failed to run nia search: ${err.message}`));
+      }
+    });
+  });
 }

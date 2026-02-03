@@ -1,21 +1,11 @@
 import type { AskFlags } from "../index.js";
 import { withContext } from "../lib/command-context.js";
-import {
-  NiaApiError,
-  searchLocalFolders,
-  searchLocalFoldersStream,
-} from "../lib/nia.js";
-import { runNiaOnce } from "../lib/nia-sync.js";
-import {
-  error,
-  formatSearchResults,
-  streamSearchResults,
-  success,
-} from "../lib/output.js";
+import { NiaSyncError, runNiaOnce, runNiaSearch } from "../lib/nia-sync.js";
+import { error, success } from "../lib/output.js";
 
 /**
  * Search query command
- * Queries notes using semantic search via Nia API
+ * Queries notes using semantic search via Nia CLI
  */
 export const askCommand = withContext(
   { requiresNiaSync: true, requiresVaultConfig: true },
@@ -60,6 +50,7 @@ export const askCommand = withContext(
       const syncSuccess = await runNiaOnce();
       if (syncSuccess) {
         console.log(success("Sync complete"));
+        console.log(); // Blank line before search output
       } else {
         console.log(
           error("Sync failed. Make sure 'nia' command is available."),
@@ -68,35 +59,23 @@ export const askCommand = withContext(
       }
     }
 
-    // Perform search
+    // Perform search via nia CLI
     try {
-      if (flags.noStream) {
-        // Non-streaming mode (original behavior)
-        const result = await searchLocalFolders(
-          ctx.niaSyncConfig.api_key,
-          query.trim(),
-          selectedFolders,
-          flags.sources,
-        );
-        console.log(formatSearchResults(result, flags.sources));
-      } else {
-        // Streaming mode (default)
-        const stream = searchLocalFoldersStream(
-          ctx.niaSyncConfig.api_key,
-          query.trim(),
-          selectedFolders,
-          flags.sources,
-        );
-        await streamSearchResults(stream, flags.sources);
+      const result = await runNiaSearch(query.trim(), selectedFolders, {
+        sources: flags.sources,
+        noStream: flags.noStream,
+      });
+
+      // In non-streaming mode, print the captured output
+      if (flags.noStream && result) {
+        console.log(result);
       }
     } catch (err) {
-      if (err instanceof NiaApiError) {
+      if (err instanceof NiaSyncError) {
         console.log(error(err.message));
       } else {
         console.log(
-          error(
-            "Could not connect to Nia API. Check your internet connection.",
-          ),
+          error("Failed to run search. Make sure 'nia' command is available."),
         );
       }
       process.exit(1);

@@ -63,7 +63,7 @@
         "Run bun run check:types to ensure no type errors"
       ],
       "notes": "The nia search CLI already handles streaming, markdown rendering, and sources display. The main change is delegating to subprocess instead of making HTTP requests. Use spawn() from node:child_process or Bun subprocess API. Consider using Bun.spawn() per AGENT.md preferences.",
-      "passed": false
+      "passed": true
     },
     {
       "description": "Add --plain flag to output raw text without markdown rendering",
@@ -79,7 +79,7 @@
         "Test: vault ask 'query' (without --plain) - verify markdown rendering still works",
         "Run bun run check:types to ensure no type errors"
       ],
-      "notes": "This flag passes --no-markdown to nia search and outputs the raw result. The implementation should be straightforward since nia search already supports --no-markdown.",
+      "notes": "This flag passes --no-markdown to nia search and outputs the raw result. The implementation should be straightforward since nia search already supports --no-markdown. In the updated ask.ts, pass `noMarkdown: flags.plain` to runNiaSearch() options. The runNiaSearch function already supports the noMarkdown option.",
       "passed": false
     },
     {
@@ -102,7 +102,7 @@
         "Test: vault find 'meeting notes' - verify picker shows and editor opens on selection",
         "Run bun run check:types to ensure no type errors"
       ],
-      "notes": "Use @inquirer/prompts select() for the interactive picker (already a dependency). The EDITOR env var is standard on Unix systems. Handle edge cases: no EDITOR set (show helpful error), file doesn't exist locally (source might be virtual path from database). Consider showing file preview or just path.",
+      "notes": "Use @inquirer/prompts select() for the interactive picker (already a dependency). The EDITOR env var is standard on Unix systems. Handle edge cases: no EDITOR set (show helpful error), file doesn't exist locally (source might be virtual path from database). Consider showing file preview or just path. Use runNiaSearch() with `json: true` option to get structured output - the function is already implemented in nia-sync.ts.",
       "passed": false
     },
     {

@@ -97,3 +97,50 @@
 - The `renderMarkdown` export from `./markdown.js` is maintained for backward compatibility with output.ts
 - To force colors in piped output for testing, use `FORCE_COLOR=1` environment variable
 - The lazy singleton pattern from the old marked implementation was removed as chalk doesn't need initialization
+
+---
+
+## Task: Migrate ask command from Nia HTTP API to nia search CLI subprocess
+
+### Completed
+
+- Created `runNiaSearch()` function in `src/lib/nia-sync.ts` that spawns the `nia search` CLI command
+- Implemented support for both streaming (default) and non-streaming modes:
+  - Streaming mode: pipes stdout directly to process.stdout for real-time output
+  - Non-streaming mode (--no-stream): captures stdout and returns as string
+- Added `NiaSearchOptions` interface with options: `sources`, `noMarkdown`, `noStream`, `json`
+- Updated `src/commands/ask.ts` to use `runNiaSearch()` instead of the old API client
+- Removed API key passing - the nia CLI handles authentication internally
+- Simplified `src/lib/output.ts` - removed all streaming API helpers (`streamSearchResults`, `formatSearchResults`, `parseStreamSources`, `NiaStreamEvent` types, etc.)
+- Deleted `src/lib/nia.ts` file entirely (HTTP API client no longer needed)
+- Removed `fetch-event-stream` package dependency with `bun remove fetch-event-stream`
+- All 36 tests pass, type checks pass
+
+### Files Changed
+
+- `src/lib/nia-sync.ts` - added `NiaSearchOptions` interface and `runNiaSearch()` function (~100 lines)
+- `src/commands/ask.ts` - rewrote to use `runNiaSearch()` instead of API client
+- `src/lib/output.ts` - removed streaming helpers, kept only folder list and config formatting
+- `src/lib/nia.ts` - deleted (was ~377 lines)
+- `package.json` - removed `fetch-event-stream` dependency
+- `bun.lock` - updated
+
+### Decisions
+
+- Used Node's `spawn()` from `node:child_process` (consistent with existing `runNiaOnce` and `runNiaStatusJson` functions)
+- In streaming mode, stdout is piped directly to terminal (`stdio: ['ignore', 'inherit', 'pipe']`) - the nia CLI handles all formatting and markdown rendering
+- In non-streaming mode, stdout is captured and returned (`stdio: ['ignore', 'pipe', 'pipe']`)
+- Stderr is always captured for error handling
+- The nia CLI handles markdown rendering natively, so we removed the custom streaming+re-render logic from output.ts
+- Kept the `requiresNiaSync` context check even though we don't use the API key - it still validates nia-sync is configured
+
+### Notes for Future Agent
+
+- The `runNiaSearch()` function delegates all search logic to the `nia search` CLI
+- The nia CLI handles: streaming, markdown rendering, sources display, and authentication
+- For the `--plain` flag (Task 4), add `noMarkdown: true` option when calling `runNiaSearch()`
+- For the `find` command (Task 5), use `json: true` option to get structured output for file picker
+- The `withContext` HOF still loads `niaSyncConfig` but the ask command no longer uses `api_key` - this is fine since the validation still occurs
+- To test streaming: `vault ask 'test query'` (output streams in real-time)
+- To test non-streaming: `vault ask 'test query' --no-stream` (output appears after completion)
+- To test with sources: `vault ask 'test query' --sources` (file paths shown after response)
