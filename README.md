@@ -48,10 +48,11 @@ After installation, the `vault` command is available globally.
 vault init
 
 # Ask a question
+vault ask "Summerize meeting notes from last week"
 vault ask "What are my notes about project planning?"
 
-# Sync folders before searching
-vault ask "meeting notes from last week" --sync
+# Find files and open in your editor
+vault find "meeting notes from last week"
 ```
 
 ## Commands
@@ -66,11 +67,27 @@ Query your notes using semantic search.
 
 **Options:**
 
-| Flag                | Description                   |
-| ------------------- | ----------------------------- |
-| `-f, --folder <id>` | Search specific folder only   |
-| `-l, --limit <n>`   | Max results (default: 5)      |
-| `-s, --sync`        | Sync folders before searching |
+| Flag                | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `-f, --folder <id>` | Search specific folder only                                |
+| `-s, --sync`        | Sync folders before searching                              |
+| `-S, --sources`     | Include source citations in output                         |
+| `-p, --plain`       | Disable terminal markdown rendering (outputs raw markdown) |
+| `--no-stream`       | Disable streaming (wait for full response)                 |
+
+### `vault find "<query>"`
+
+Search for files matching your query and open the selected file in your editor.
+
+```bash
+vault find "meeting notes from last week"
+```
+
+This command:
+
+1. Searches your indexed folders for files matching the query
+2. Displays an interactive file picker
+3. Opens the selected file in your default editor (`$VISUAL` or `$EDITOR`, falling back to `vi`)
 
 ### `vault sync`
 
@@ -104,14 +121,15 @@ This file only stores which folders are included in searches. The API key is alw
 
 ## Troubleshooting
 
-| Error                          | Solution                              |
-| ------------------------------ | ------------------------------------- |
-| `nia-sync not configured`      | Run `nia login` to authenticate       |
-| `No configuration found`       | Run `vault init` to set up            |
-| `Invalid API key`              | Run `nia login` to re-authenticate    |
-| `No synced folders found`      | Run `nia add ~/path` to add folders   |
-| `No folders selected`          | Run `vault folders` to select folders |
-| `Could not connect to Nia API` | Check your internet connection        |
+| Error                     | Solution                                           |
+| ------------------------- | -------------------------------------------------- |
+| `nia-sync not configured` | Run `nia login` to authenticate                    |
+| `No configuration found`  | Run `vault init` to set up                         |
+| `Invalid API key`         | Run `nia login` to re-authenticate                 |
+| `No synced folders found` | Run `nia add ~/path` to add folders                |
+| `No folders selected`     | Run `vault folders` to select folders              |
+| `Editor not found`        | Set `$EDITOR` or `$VISUAL` environment variable    |
+| `No matching files found` | Try a different query or ensure folders are synced |
 
 ## Contributing
 

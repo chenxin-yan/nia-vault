@@ -223,3 +223,43 @@
 - The editor spawns interactively - the CLI blocks until the editor is closed
 - Users without `vi` installed and no `EDITOR`/`VISUAL` set will get a helpful error message
 - The command can be tested with: `vault find 'meeting notes'` (requires nia-sync configured and folders selected)
+
+---
+
+## Task: Update documentation for new features and changed behavior
+
+### Completed
+
+- Updated README.md Commands section with `vault find` command documentation
+- Added find command example to Quick Start section
+- Updated Options table for 'ask' command to include:
+  - `-S, --sources` - Include source citations in output
+  - `-p, --plain` - Output raw text without markdown formatting
+  - `--no-stream` - Disable streaming (wait for full response)
+- Removed outdated `-l, --limit` option (no longer in CLI)
+- Added detailed `vault find` command documentation with usage example and explanation
+- Updated Troubleshooting section with new error scenarios:
+  - `Editor not found` - for find command editor issues
+  - `No matching files found` - for empty search results
+- Removed outdated `Could not connect to Nia API` error (now handled by nia CLI)
+- Verified all existing documentation is accurate after recent changes
+- All tests pass (36 tests)
+- Type checks pass
+
+### Files Changed
+
+- `README.md` - updated Commands section, Quick Start section, Options table, and Troubleshooting section
+
+### Decisions
+
+- Kept documentation concise and consistent with existing style
+- Focused on user-facing changes only
+- Documented the editor environment variable priority order (`$VISUAL` -> `$EDITOR` -> `vi`)
+- Updated troubleshooting table to reflect new error scenarios from find command
+
+### Notes for Future Agent
+
+- All features from previous tasks are now fully documented
+- The documentation accurately reflects the current CLI behavior
+- The nia-sync prerequisite is already well documented in the Prerequisites section
+- All examples in Quick Start should work with a properly configured nia-sync installation
