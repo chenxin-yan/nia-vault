@@ -17,7 +17,7 @@
         "Run bun test to verify all tests pass"
       ],
       "notes": "Use regex-based line-by-line parsing. Token structure should include: type, content, and metadata (level for headers, language for code blocks, url for links). Consider edge cases like nested formatting and escaped characters.",
-      "passed": false
+      "passed": true
     },
     {
       "description": "Implement chalk-based markdown renderer and replace marked/marked-terminal packages",
