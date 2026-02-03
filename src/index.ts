@@ -3,6 +3,7 @@
 import meow from "meow";
 import { askCommand } from "./commands/ask.js";
 import { configCommand, configResetCommand } from "./commands/config.js";
+import { findCommand } from "./commands/find.js";
 import { foldersCommand } from "./commands/folders.js";
 import { initCommand } from "./commands/init.js";
 import { syncCommand } from "./commands/sync.js";
@@ -25,6 +26,7 @@ const cli = meow(
   Commands
     init              Interactive setup wizard
     ask <query>       Search your notes using semantic search
+    find <query>      Find files and open in editor
     sync              Manually sync folders with Nia
     folders           Manage folders in search scope
     config            View or reset configuration
@@ -117,6 +119,12 @@ async function main(): Promise<void> {
         plain: cli.flags.plain,
       };
       await askCommand(query, askFlags);
+      break;
+    }
+
+    case "find": {
+      const findQuery = args.join(" ");
+      await findCommand(findQuery);
       break;
     }
 

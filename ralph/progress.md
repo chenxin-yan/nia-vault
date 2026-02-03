@@ -178,3 +178,48 @@
 - The nia CLI handles the markdown vs plain text rendering - we just pass through the option
 - To test: `vault ask 'query' --plain` or `vault ask 'query' -p` should output raw text without markdown formatting
 - The implementation was straightforward because the `runNiaSearch()` function already supported the `noMarkdown` option from Task 3
+
+---
+
+## Task: Create find command with interactive file picker to open files with EDITOR
+
+### Completed
+
+- Created `src/commands/find.ts` with full implementation of the find command
+- Used `withContext` HOF with `{ requiresNiaSync: true, requiresVaultConfig: true }` requirements
+- Accepts query string parameter and validates it is not empty
+- Calls `runNiaSearch()` with `{ json: true, sources: true }` to get structured JSON output
+- Created Zod schemas (`NiaSearchSource`, `NiaSearchJsonResponse`) to parse and validate the JSON response
+- Extracts source file paths from the parsed response
+- Shows "No matching files found" message if no sources returned
+- Uses `@inquirer/prompts select()` to show interactive file picker with arrow key navigation
+- Implements `getEditor()` function that checks `VISUAL` -> `EDITOR` -> `vi` fallback
+- Implements `openInEditor()` function that spawns editor with `stdio: 'inherit'` for interactive editing
+- Handles ENOENT error when editor is not found with helpful error message
+- Added `find` command to switch statement in `src/index.ts`
+- Added import for `findCommand` in `src/index.ts`
+- Updated CLI help text to include `find <query>      Find files and open in editor`
+- All 36 tests pass (`bun test`)
+- Type checks pass (`bun run check:types`)
+
+### Files Changed
+
+- `src/commands/find.ts` (new file - 155 lines)
+- `src/index.ts` - added import, help text, and switch case for find command
+
+### Decisions
+
+- Used `VISUAL` env var as first priority (standard for GUI editors), then `EDITOR`, then `vi` as fallback
+- Used Zod for JSON response validation to handle unexpected response formats gracefully
+- Used `stdio: 'inherit'` for editor subprocess so it can take over the terminal for interactive editing
+- The select prompt shows file paths as choices with optional snippet descriptions (truncated to 80 chars)
+- Included `sources: true` option to ensure the JSON response includes source paths
+
+### Notes for Future Agent
+
+- The find command uses `runNiaSearch()` with `json: true` which uses `--json` flag
+- The JSON response schema expects `{ sources: [{ path: string, name?: string, snippet?: string }] }`
+- If the actual `nia search --json` output format differs, the Zod schema may need adjustment
+- The editor spawns interactively - the CLI blocks until the editor is closed
+- Users without `vi` installed and no `EDITOR`/`VISUAL` set will get a helpful error message
+- The command can be tested with: `vault find 'meeting notes'` (requires nia-sync configured and folders selected)

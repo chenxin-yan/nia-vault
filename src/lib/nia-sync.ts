@@ -236,14 +236,6 @@ export async function runNiaSearch(
     }
     if (options.json) {
       args.push("--json");
-      // JSON mode is incompatible with streaming and markdown rendering in nia CLI
-      // Ensure we disable both to avoid CLI validation errors
-      if (!options.noStream) {
-        args.push("--no-stream");
-      }
-      if (!options.noMarkdown) {
-        args.push("--no-markdown");
-      }
     }
 
     // Determine streaming vs non-streaming mode

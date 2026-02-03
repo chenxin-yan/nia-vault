@@ -103,7 +103,7 @@
         "Run bun run check:types to ensure no type errors"
       ],
       "notes": "Use @inquirer/prompts select() for the interactive picker (already a dependency). The EDITOR env var is standard on Unix systems. Handle edge cases: no EDITOR set (show helpful error), file doesn't exist locally (source might be virtual path from database). Consider showing file preview or just path. Use runNiaSearch() with `json: true` option to get structured output - the function is already implemented in nia-sync.ts.",
-      "passed": false
+      "passed": true
     },
     {
       "description": "Update documentation for new features and changed behavior",

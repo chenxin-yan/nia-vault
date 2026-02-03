@@ -1,0 +1,173 @@
+import { spawn } from "node:child_process";
+import { select } from "@inquirer/prompts";
+import z from "zod";
+import { withContext } from "../lib/command-context.js";
+import { NiaSyncError, runNiaSearch } from "../lib/nia-sync.js";
+import { error } from "../lib/output.js";
+
+// Schema for parsing nia search --json response
+// The response contains sources with metadata including file paths
+const NiaSearchSourceMetadata = z.object({
+  file_path: z.string(),
+  local_folder_name: z.string().optional(),
+});
+
+const NiaSearchSource = z.object({
+  content: z.string(),
+  metadata: NiaSearchSourceMetadata,
+});
+
+const NiaSearchJsonResponse = z.object({
+  content: z.string().optional(),
+  sources: z.array(NiaSearchSource).optional(),
+});
+
+/**
+ * Get the user's preferred editor from environment variables
+ * Falls back to common editors if none set
+ */
+function getEditor(): string {
+  return process.env.VISUAL || process.env.EDITOR || "vi";
+}
+
+/**
+ * Open a file in the user's preferred editor
+ * Spawns editor as an interactive subprocess
+ */
+async function openInEditor(filePath: string): Promise<void> {
+  const editor = getEditor();
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn(editor, [filePath], {
+      stdio: "inherit", // Inherit stdin/stdout/stderr for interactive editing
+    });
+
+    proc.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Editor exited with code ${code}`));
+      }
+    });
+
+    proc.on("error", (err) => {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+        reject(
+          new Error(
+            `Editor '${editor}' not found. Set EDITOR or VISUAL environment variable.`,
+          ),
+        );
+      } else {
+        reject(new Error(`Failed to open editor: ${err.message}`));
+      }
+    });
+  });
+}
+
+/**
+ * Find command
+ * Search for files matching a query and open selected file in editor
+ */
+export const findCommand = withContext(
+  { requiresNiaSync: true, requiresVaultConfig: true },
+  async (ctx, query: string): Promise<void> => {
+    // Validate query
+    if (!query?.trim()) {
+      console.log(
+        error(
+          'Please provide a search query. Usage: vault find "your question"',
+        ),
+      );
+      process.exit(1);
+    }
+
+    // Get selected folders from config
+    const selectedFolders = ctx.vaultConfig.selectedFolders;
+    if (selectedFolders.length === 0) {
+      console.log(
+        error(
+          "No folders selected for search. Run 'vault folders' to select folders.",
+        ),
+      );
+      process.exit(1);
+    }
+
+    // Search using nia with JSON output
+    let jsonOutput: string;
+    try {
+      jsonOutput = await runNiaSearch(query.trim(), selectedFolders, {
+        json: true,
+        sources: true,
+      });
+    } catch (err) {
+      if (err instanceof NiaSyncError) {
+        console.log(error(err.message));
+      } else {
+        console.log(
+          error("Failed to run search. Make sure 'nia' command is available."),
+        );
+      }
+      process.exit(1);
+    }
+
+    // Parse JSON response
+    let sources: Array<{
+      filePath: string;
+      folderName?: string;
+      snippet?: string;
+    }>;
+    try {
+      const parsed = JSON.parse(jsonOutput);
+      const result = NiaSearchJsonResponse.parse(parsed);
+      // Transform sources to extract file paths from metadata
+      sources = (result.sources || []).map((source) => ({
+        filePath: source.metadata.file_path,
+        folderName: source.metadata.local_folder_name,
+        snippet: source.content,
+      }));
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        console.log(error("Failed to parse search response. Invalid JSON."));
+      } else if (err instanceof z.ZodError) {
+        console.log(error("Unexpected search response format."));
+      } else {
+        console.log(
+          error(`Failed to parse search response: ${(err as Error).message}`),
+        );
+      }
+      process.exit(1);
+    }
+
+    // Check if any sources were found
+    if (sources.length === 0) {
+      console.log("No matching files found.\n");
+      return;
+    }
+
+    // Deduplicate sources by file path (same file may appear multiple times with different chunks)
+    const uniqueSources = Array.from(
+      new Map(sources.map((s) => [s.filePath, s])).values(),
+    );
+
+    // Create choices for the select prompt
+    const choices = uniqueSources.map((source) => ({
+      name: source.filePath,
+      value: source.filePath,
+      description: source.snippet?.substring(0, 80),
+    }));
+
+    // Show interactive file picker
+    const selectedPath = await select<string>({
+      message: "Select a file to open:",
+      choices,
+    });
+
+    // Open selected file in editor
+    try {
+      await openInEditor(selectedPath);
+    } catch (err) {
+      console.log(error((err as Error).message));
+      process.exit(1);
+    }
+  },
+);
