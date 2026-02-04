@@ -35,7 +35,7 @@ const cli = meow(
     -f, --folder <id>  Search specific folder only
     -s, --sync         Sync folders before searching
     -S, --sources      Include source citations in output
-    -p, --plain        Output raw text without markdown formatting
+    -p, --plain        Disable terminal markdown rendering (outputs raw markdown)
     --no-stream        Disable streaming (wait for full response)
 
   Options for 'config'
