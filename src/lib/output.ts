@@ -13,20 +13,3 @@ export function success(message: string): string {
 export function error(message: string): string {
   return `${figures.cross} ${message}`;
 }
-
-/**
- * Format config display
- */
-export function formatConfig(
-  configPath: string,
-  niaSyncPath: string,
-  folderCount: number,
-): string {
-  const lines = [
-    "Configuration:",
-    `  Config file:     ${configPath}`,
-    `  API key source:  ${niaSyncPath} (nia-sync)`,
-    `  Search folders:  ${folderCount} selected`,
-  ];
-  return lines.join("\n");
-}
