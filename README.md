@@ -67,13 +67,12 @@ Query your notes using semantic search.
 
 **Options:**
 
-| Flag                | Description                              |
-| ------------------- | ---------------------------------------- |
-| `-f, --folder <id>` | Search specific folder only              |
-| `-s, --sync`        | Sync folders before searching            |
-| `-S, --sources`     | Include source citations in output       |
+| Flag                | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `-f, --folder <id>` | Search specific folder only                                |
+| `-s, --sync`        | Sync folders before searching                              |
 | `-p, --plain`       | Disable terminal markdown rendering (outputs raw markdown) |
-| `--no-stream`       | Disable streaming (wait for full response) |
+| `--no-stream`       | Disable streaming (wait for full response)                 |
 
 ### `vault find "<query>"`
 

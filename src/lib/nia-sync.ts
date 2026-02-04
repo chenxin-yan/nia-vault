@@ -9,13 +9,13 @@ import z from "zod";
 // ============================================================================
 
 export interface NiaSearchOptions {
-  /** Include source citations in output */
-  sources?: boolean;
   /** Disable markdown rendering in CLI output */
   noMarkdown?: boolean;
   /** Disable streaming (wait for full response) */
   noStream?: boolean;
-  /** Output in JSON format */
+  /** Include source citations in output */
+  sources?: boolean;
+  /** Output in JSON format (captures and returns stdout) */
   json?: boolean;
 }
 
@@ -202,12 +202,9 @@ export async function listLocalFolders(): Promise<LocalFolder[]> {
  * Otherwise, output is written directly to the terminal via inherited stdio,
  * allowing the nia CLI to handle TTY detection and markdown rendering natively.
  *
- * The --no-stream flag controls whether nia streams tokens in real-time or
- * waits for the full response before outputting.
- *
  * @param query - Natural language search query
  * @param folderIds - Array of local folder IDs to search
- * @param options - Search options (sources, noMarkdown, noStream, json)
+ * @param options - Search options (noMarkdown, noStream, sources, json)
  * @returns When json=true, returns the captured JSON output string; otherwise void
  *
  * @throws NiaSyncError if nia CLI is not found or exits with non-zero code
@@ -227,14 +224,14 @@ export async function runNiaSearch(
     }
 
     // Add optional flags
-    if (options.sources) {
-      args.push("--sources");
-    }
     if (options.noMarkdown) {
       args.push("--no-markdown");
     }
     if (options.noStream) {
       args.push("--no-stream");
+    }
+    if (options.sources) {
+      args.push("--sources");
     }
     if (options.json) {
       args.push("--json");

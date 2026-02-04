@@ -13,7 +13,6 @@ export interface AskFlags {
   folder?: string;
   limit?: number;
   sync?: boolean;
-  sources?: boolean;
   noStream?: boolean;
   plain?: boolean;
 }
@@ -34,7 +33,6 @@ const cli = meow(
   Options for 'ask'
     -f, --folder <id>  Search specific folder only
     -s, --sync         Sync folders before searching
-    -S, --sources      Include source citations in output
     -p, --plain        Disable terminal markdown rendering (outputs raw markdown)
     --no-stream        Disable streaming (wait for full response)
 
@@ -68,10 +66,7 @@ const cli = meow(
         type: "boolean",
         shortFlag: "s",
       },
-      sources: {
-        type: "boolean",
-        shortFlag: "S",
-      },
+
       stream: {
         type: "boolean",
         default: true,
@@ -114,7 +109,6 @@ async function main(): Promise<void> {
         folder: cli.flags.folder,
         limit: cli.flags.limit,
         sync: cli.flags.sync,
-        sources: cli.flags.sources,
         noStream: !cli.flags.stream,
         plain: cli.flags.plain,
       };

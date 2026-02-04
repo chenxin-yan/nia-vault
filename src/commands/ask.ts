@@ -62,7 +62,6 @@ export const askCommand = withContext(
     // Perform search via nia CLI
     try {
       const result = await runNiaSearch(query.trim(), selectedFolders, {
-        sources: flags.sources,
         noStream: flags.noStream,
         noMarkdown: flags.plain,
       });
