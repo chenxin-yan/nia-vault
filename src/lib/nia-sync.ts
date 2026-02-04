@@ -216,7 +216,7 @@ export async function runNiaSearch(
   query: string,
   folderIds: string[],
   options: NiaSearchOptions = {},
-): Promise<string | void> {
+): Promise<string | undefined> {
   return new Promise((resolve, reject) => {
     // Build CLI args: nia search <query> [--local-folder <id>]... [flags]
     const args: string[] = ["search", query];
