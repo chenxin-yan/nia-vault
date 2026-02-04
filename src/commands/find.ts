@@ -1,15 +1,25 @@
 import { spawn } from "node:child_process";
+import { join } from "node:path";
 import { select } from "@inquirer/prompts";
 import z from "zod";
 import { withContext } from "../lib/command-context.js";
-import { NiaSyncError, runNiaSearch } from "../lib/nia-sync.js";
+import {
+  listLocalFolders,
+  NiaSyncError,
+  runNiaSearch,
+} from "../lib/nia-sync.js";
 import { error } from "../lib/output.js";
 
 // Schema for parsing nia search --json response
-// The response contains sources with metadata including file paths
+// Sources have content at top level, with metadata nested containing file_path
 const NiaSearchSourceMetadata = z.object({
   file_path: z.string(),
   local_folder_name: z.string().optional(),
+  local_folder_id: z.string().optional(),
+  chunk_index: z.number().optional(),
+  start_byte: z.string().optional(),
+  source_type: z.string().optional(),
+  score: z.number().optional(),
 });
 
 const NiaSearchSource = z.object({
@@ -20,6 +30,7 @@ const NiaSearchSource = z.object({
 const NiaSearchJsonResponse = z.object({
   content: z.string().optional(),
   sources: z.array(NiaSearchSource).optional(),
+  follow_up_questions: z.array(z.string()).optional(),
 });
 
 /**
@@ -92,13 +103,34 @@ export const findCommand = withContext(
       process.exit(1);
     }
 
+    // Get folder paths to resolve relative file paths to absolute paths
+    let folderPathMap: Map<string, string>;
+    try {
+      const folders = await listLocalFolders();
+      folderPathMap = new Map(folders.map((f) => [f.id, f.path]));
+    } catch (err) {
+      if (err instanceof NiaSyncError) {
+        console.log(error(err.message));
+      } else {
+        console.log(error("Failed to get folder information."));
+      }
+      process.exit(1);
+    }
+
     // Search using nia with JSON output
     let jsonOutput: string;
     try {
-      jsonOutput = await runNiaSearch(query.trim(), selectedFolders, {
+      const result = await runNiaSearch(query.trim(), selectedFolders, {
         json: true,
         sources: true,
       });
+
+      // Ensure we have output (json mode should always return a string)
+      if (!result) {
+        console.log(error("No response received from search."));
+        process.exit(1);
+      }
+      jsonOutput = result;
     } catch (err) {
       if (err instanceof NiaSyncError) {
         console.log(error(err.message));
@@ -112,7 +144,8 @@ export const findCommand = withContext(
 
     // Parse JSON response
     let sources: Array<{
-      filePath: string;
+      filePath: string; // Absolute path for opening
+      displayPath: string; // Relative path for display
       folderName?: string;
       snippet?: string;
     }>;
@@ -120,11 +153,26 @@ export const findCommand = withContext(
       const parsed = JSON.parse(jsonOutput);
       const result = NiaSearchJsonResponse.parse(parsed);
       // Transform sources to extract file paths from metadata
-      sources = (result.sources || []).map((source) => ({
-        filePath: source.metadata.file_path,
-        folderName: source.metadata.local_folder_name,
-        snippet: source.content,
-      }));
+      // Resolve relative paths to absolute paths using folder base paths
+      sources = (result.sources || [])
+        .map((source) => {
+          const folderId = source.metadata.local_folder_id;
+          const relativePath = source.metadata.file_path;
+          const basePath = folderId ? folderPathMap.get(folderId) : undefined;
+
+          // Build absolute path if we have the base path, otherwise use relative
+          const absolutePath = basePath
+            ? join(basePath, relativePath)
+            : relativePath;
+
+          return {
+            filePath: absolutePath,
+            displayPath: relativePath, // Keep relative path for display
+            folderName: source.metadata.local_folder_name,
+            snippet: source.content,
+          };
+        })
+        .filter((source) => source.filePath !== source.displayPath); // Only include sources we can resolve
     } catch (err) {
       if (err instanceof SyntaxError) {
         console.log(error("Failed to parse search response. Invalid JSON."));
@@ -144,14 +192,18 @@ export const findCommand = withContext(
       return;
     }
 
-    // Deduplicate sources by file path (same file may appear multiple times with different chunks)
+    // Deduplicate sources by display path (same file may appear multiple times with different chunks)
+    // Limit to top 5 most relevant results (sources are ordered by relevance from the API)
+    const MAX_RESULTS = 5;
+    // TODO: should set a threadhold to filter relevancy when its available from API
     const uniqueSources = Array.from(
-      new Map(sources.map((s) => [s.filePath, s])).values(),
-    );
+      new Map(sources.map((s) => [s.displayPath, s])).values(),
+    ).slice(0, MAX_RESULTS);
 
     // Create choices for the select prompt
+    // Show relative path for readability, but use absolute path as value
     const choices = uniqueSources.map((source) => ({
-      name: source.filePath,
+      name: source.displayPath,
       value: source.filePath,
       description: source.snippet?.substring(0, 80),
     }));
