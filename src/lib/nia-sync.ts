@@ -197,16 +197,18 @@ export async function listLocalFolders(): Promise<LocalFolder[]> {
  * Run `nia search` command to query notes using semantic search
  *
  * Spawns the nia CLI with the search command and appropriate arguments.
- * Supports both streaming (default) and non-streaming modes.
  *
- * In streaming mode: pipes stdout directly to process.stdout for real-time output
- * In non-streaming mode: captures stdout and returns the full output as a string
+ * When `json` option is true, stdout is captured and returned as a string.
+ * Otherwise, output is written directly to the terminal via inherited stdio,
+ * allowing the nia CLI to handle TTY detection and markdown rendering natively.
+ *
+ * The --no-stream flag controls whether nia streams tokens in real-time or
+ * waits for the full response before outputting.
  *
  * @param query - Natural language search query
  * @param folderIds - Array of local folder IDs to search
  * @param options - Search options (sources, noMarkdown, noStream, json)
- * @returns In streaming mode: resolves when complete, returns empty string
- *          In non-streaming mode: resolves with the captured output
+ * @returns When json=true, returns the captured JSON output string; otherwise void
  *
  * @throws NiaSyncError if nia CLI is not found or exits with non-zero code
  */
@@ -214,7 +216,7 @@ export async function runNiaSearch(
   query: string,
   folderIds: string[],
   options: NiaSearchOptions = {},
-): Promise<string> {
+): Promise<string | void> {
   return new Promise((resolve, reject) => {
     // Build CLI args: nia search <query> [--local-folder <id>]... [flags]
     const args: string[] = ["search", query];
@@ -238,26 +240,25 @@ export async function runNiaSearch(
       args.push("--json");
     }
 
-    // Determine streaming vs non-streaming mode
-    const isStreaming = !options.noStream && !options.json;
-
     let stdout = "";
     let stderr = "";
 
+    // When JSON mode is enabled, capture stdout to return it
+    // Otherwise, inherit stdout for direct terminal output with TTY detection
+    const captureOutput = options.json === true;
+
     const proc: ChildProcess = spawn("nia", args, {
-      stdio: isStreaming
-        ? ["ignore", "inherit", "pipe"] // Stream stdout directly to terminal
-        : ["ignore", "pipe", "pipe"], // Capture stdout
+      stdio: ["ignore", captureOutput ? "pipe" : "inherit", "pipe"],
     });
 
-    // Capture stdout in non-streaming mode
-    if (!isStreaming && proc.stdout) {
+    // Capture stdout when in JSON mode
+    if (captureOutput && proc.stdout) {
       proc.stdout.on("data", (data: Buffer) => {
         stdout += data.toString();
       });
     }
 
-    // Always capture stderr for error messages
+    // Capture stderr for error messages
     if (proc.stderr) {
       proc.stderr.on("data", (data: Buffer) => {
         stderr += data.toString();
@@ -266,7 +267,7 @@ export async function runNiaSearch(
 
     proc.on("close", (code) => {
       if (code === 0) {
-        resolve(stdout);
+        resolve(captureOutput ? stdout : undefined);
       } else {
         reject(
           new NiaSyncError(stderr || `nia search exited with code ${code}`),
