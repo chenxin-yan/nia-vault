@@ -2,7 +2,6 @@
  * Test helper utilities for nia-vault tests
  */
 
-import { spawn } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -40,26 +39,6 @@ export function setupFakeNia(): { cleanup: () => void; binDir: string } {
       rm(binDir, { recursive: true, force: true }).catch(() => {});
     },
   };
-}
-
-/**
- * Check if the real nia CLI is available in PATH
- * Useful for skipping integration tests that require the real CLI
- */
-export async function hasRealNia(): Promise<boolean> {
-  return new Promise((resolve) => {
-    const proc = spawn("nia", ["--version"], {
-      stdio: ["ignore", "ignore", "ignore"],
-    });
-
-    proc.on("close", (code) => {
-      resolve(code === 0);
-    });
-
-    proc.on("error", () => {
-      resolve(false);
-    });
-  });
 }
 
 /**

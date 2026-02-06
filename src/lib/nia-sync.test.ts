@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import z from "zod";
-import {
-  hasRealNia,
-  loadFixture,
-  setupFakeNia,
-} from "../__fixtures__/helpers.js";
+import { loadFixture, setupFakeNia } from "../__fixtures__/helpers.js";
 import {
   listLocalFolders,
   NiaSyncConfig,

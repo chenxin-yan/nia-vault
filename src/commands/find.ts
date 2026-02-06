@@ -195,7 +195,6 @@ export const findCommand = withContext(
     const choices = fileEntries.map((file) => ({
       name: file.displayPath,
       value: file.absolutePath,
-      description: file.snippet?.substring(0, 80),
     }));
 
     // Show interactive file picker
