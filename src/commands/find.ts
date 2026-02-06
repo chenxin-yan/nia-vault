@@ -1,8 +1,12 @@
 import { spawn } from "node:child_process";
-import { join } from "node:path";
 import { select } from "@inquirer/prompts";
 import z from "zod";
 import { withContext } from "../lib/command-context.js";
+import {
+  deduplicateFiles,
+  filterByScore,
+  mapSourcesToFiles,
+} from "../lib/find-utils.js";
 import {
   listLocalFolders,
   NiaSyncError,
@@ -32,7 +36,7 @@ const NiaSearchSource = z.object({
 // Score threshold for filtering search results
 // Based on testing: relevant results typically score > 0.4, loosely related ~0.33-0.35
 // Using 0.4 as threshold to filter noise while keeping relevant results
-const SCORE_THRESHOLD = 0.4;
+export const SCORE_THRESHOLD = 0.4;
 
 const NiaSearchRawResponse = z.object({
   // content is null in --raw mode (no LLM processing)
@@ -149,44 +153,24 @@ export const findCommand = withContext(
       process.exit(1);
     }
 
-    // Parse JSON response
-    let sources: Array<{
-      filePath: string; // Absolute path for opening
-      displayPath: string; // Relative path for display
-      folderName?: string;
-      snippet?: string;
-    }>;
+    // Parse JSON response and extract file entries using utility functions
+    // Maximum number of files to show in the picker
+    const MAX_RESULTS = 5;
+    let fileEntries: ReturnType<typeof deduplicateFiles>;
+
     try {
       const parsed = JSON.parse(jsonOutput);
       const result = NiaSearchRawResponse.parse(parsed);
+      const rawSources = result.sources || [];
 
-      // Filter sources by relevancy score before processing
-      // Sources with score below threshold are considered noise and excluded
-      const relevantSources = (result.sources || []).filter(
-        (source) => source.metadata.score >= SCORE_THRESHOLD,
-      );
+      // 1. Filter by score threshold
+      const relevantSources = filterByScore(rawSources, SCORE_THRESHOLD);
 
-      // Transform sources to extract file paths from metadata
-      // Resolve relative paths to absolute paths using folder base paths
-      sources = relevantSources
-        .map((source) => {
-          const folderId = source.metadata.local_folder_id;
-          const relativePath = source.metadata.file_path;
-          const basePath = folderId ? folderPathMap.get(folderId) : undefined;
+      // 2. Map to file entries with resolved absolute paths
+      const mappedFiles = mapSourcesToFiles(relevantSources, folderPathMap);
 
-          // Build absolute path if we have the base path, otherwise use relative
-          const absolutePath = basePath
-            ? join(basePath, relativePath)
-            : relativePath;
-
-          return {
-            filePath: absolutePath,
-            displayPath: relativePath, // Keep relative path for display
-            folderName: source.metadata.local_folder_name,
-            snippet: source.content,
-          };
-        })
-        .filter((source) => source.filePath !== source.displayPath); // Only include sources we can resolve
+      // 3. Deduplicate and limit results
+      fileEntries = deduplicateFiles(mappedFiles, MAX_RESULTS);
     } catch (err) {
       if (err instanceof SyntaxError) {
         console.log(error("Failed to parse search response. Invalid JSON."));
@@ -200,25 +184,18 @@ export const findCommand = withContext(
       process.exit(1);
     }
 
-    // Check if any sources were found (after score filtering)
-    if (sources.length === 0) {
+    // Check if any files were found (after score filtering)
+    if (fileEntries.length === 0) {
       console.log("No matching files found.\n");
       return;
     }
 
-    // Deduplicate sources by display path (same file may appear multiple times with different chunks)
-    // Limit to top 5 most relevant results (sources are ordered by relevance from the API)
-    const MAX_RESULTS = 5;
-    const uniqueSources = Array.from(
-      new Map(sources.map((s) => [s.displayPath, s])).values(),
-    ).slice(0, MAX_RESULTS);
-
     // Create choices for the select prompt
     // Show relative path for readability, but use absolute path as value
-    const choices = uniqueSources.map((source) => ({
-      name: source.displayPath,
-      value: source.filePath,
-      description: source.snippet?.substring(0, 80),
+    const choices = fileEntries.map((file) => ({
+      name: file.displayPath,
+      value: file.absolutePath,
+      description: file.snippet?.substring(0, 80),
     }));
 
     // Show interactive file picker
