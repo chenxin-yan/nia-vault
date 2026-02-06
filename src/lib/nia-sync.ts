@@ -17,6 +17,8 @@ export interface NiaSearchOptions {
   sources?: boolean;
   /** Output in JSON format (captures and returns stdout) */
   json?: boolean;
+  /** Raw mode - return vector search results without LLM processing (outputs JSON by default) */
+  raw?: boolean;
 }
 
 // nia-sync configuration (read from ~/.nia-sync/config.json)
@@ -236,13 +238,17 @@ export async function runNiaSearch(
     if (options.json) {
       args.push("--json");
     }
+    if (options.raw) {
+      args.push("--raw");
+    }
 
     let stdout = "";
     let stderr = "";
 
-    // When JSON mode is enabled, capture stdout to return it
+    // When JSON or raw mode is enabled, capture stdout to return it
+    // Raw mode outputs JSON by default, so we capture stdout the same way
     // Otherwise, inherit stdout for direct terminal output with TTY detection
-    const captureOutput = options.json === true;
+    const captureOutput = options.json === true || options.raw === true;
 
     const proc: ChildProcess = spawn("nia", args, {
       stdio: ["ignore", captureOutput ? "pipe" : "inherit", "pipe"],

@@ -10,8 +10,10 @@ import {
 } from "../lib/nia-sync.js";
 import { error } from "../lib/output.js";
 
-// Schema for parsing nia search --json response
-// Sources have content at top level, with metadata nested containing file_path
+// Schema for parsing nia search --raw response
+// --raw returns vector search results without LLM processing
+// Response format: { content: null, sources: [...] }
+// Each source has content (text chunk) and metadata containing score, file_path, etc.
 const NiaSearchSourceMetadata = z.object({
   file_path: z.string(),
   local_folder_name: z.string().optional(),
@@ -19,7 +21,7 @@ const NiaSearchSourceMetadata = z.object({
   chunk_index: z.number().optional(),
   start_byte: z.string().optional(),
   source_type: z.string().optional(),
-  score: z.number().optional(),
+  score: z.number(),
 });
 
 const NiaSearchSource = z.object({
@@ -27,8 +29,9 @@ const NiaSearchSource = z.object({
   metadata: NiaSearchSourceMetadata,
 });
 
-const NiaSearchJsonResponse = z.object({
-  content: z.string().optional(),
+const NiaSearchRawResponse = z.object({
+  // content is null in --raw mode (no LLM processing)
+  content: z.string().nullable(),
   sources: z.array(NiaSearchSource).optional(),
   follow_up_questions: z.array(z.string()).optional(),
 });
@@ -117,12 +120,11 @@ export const findCommand = withContext(
       process.exit(1);
     }
 
-    // Search using nia with JSON output
+    // Search using nia with --raw flag for direct vector search (skips LLM processing)
     let jsonOutput: string;
     try {
       const result = await runNiaSearch(query.trim(), selectedFolders, {
-        json: true,
-        sources: true,
+        raw: true,
       });
 
       // Ensure we have output (json mode should always return a string)
@@ -151,7 +153,7 @@ export const findCommand = withContext(
     }>;
     try {
       const parsed = JSON.parse(jsonOutput);
-      const result = NiaSearchJsonResponse.parse(parsed);
+      const result = NiaSearchRawResponse.parse(parsed);
       // Transform sources to extract file paths from metadata
       // Resolve relative paths to absolute paths using folder base paths
       sources = (result.sources || [])
