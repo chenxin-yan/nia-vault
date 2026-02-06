@@ -29,6 +29,11 @@ const NiaSearchSource = z.object({
   metadata: NiaSearchSourceMetadata,
 });
 
+// Score threshold for filtering search results
+// Based on testing: relevant results typically score > 0.4, loosely related ~0.33-0.35
+// Using 0.4 as threshold to filter noise while keeping relevant results
+const SCORE_THRESHOLD = 0.4;
+
 const NiaSearchRawResponse = z.object({
   // content is null in --raw mode (no LLM processing)
   content: z.string().nullable(),
@@ -154,9 +159,16 @@ export const findCommand = withContext(
     try {
       const parsed = JSON.parse(jsonOutput);
       const result = NiaSearchRawResponse.parse(parsed);
+
+      // Filter sources by relevancy score before processing
+      // Sources with score below threshold are considered noise and excluded
+      const relevantSources = (result.sources || []).filter(
+        (source) => source.metadata.score >= SCORE_THRESHOLD,
+      );
+
       // Transform sources to extract file paths from metadata
       // Resolve relative paths to absolute paths using folder base paths
-      sources = (result.sources || [])
+      sources = relevantSources
         .map((source) => {
           const folderId = source.metadata.local_folder_id;
           const relativePath = source.metadata.file_path;
@@ -188,7 +200,7 @@ export const findCommand = withContext(
       process.exit(1);
     }
 
-    // Check if any sources were found
+    // Check if any sources were found (after score filtering)
     if (sources.length === 0) {
       console.log("No matching files found.\n");
       return;
@@ -197,7 +209,6 @@ export const findCommand = withContext(
     // Deduplicate sources by display path (same file may appear multiple times with different chunks)
     // Limit to top 5 most relevant results (sources are ordered by relevance from the API)
     const MAX_RESULTS = 5;
-    // TODO: should set a threadhold to filter relevancy when its available from API
     const uniqueSources = Array.from(
       new Map(sources.map((s) => [s.displayPath, s])).values(),
     ).slice(0, MAX_RESULTS);
