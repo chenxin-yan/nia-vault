@@ -1,0 +1,81 @@
+{
+  "content": null,
+  "sources": [
+    {
+      "content": "CDN (Content Delivery Network) is a distributed network of servers that delivers content to users based on their geographic location. CDNs improve website performance by caching content closer to end users.",
+      "metadata": {
+        "file_path": "CSCI-UA.0480-062 Computer Networks.md",
+        "local_folder_name": "Notes",
+        "local_folder_id": "folder_abc123",
+        "chunk_index": 3,
+        "start_byte": "1024",
+        "source_type": "markdown",
+        "score": 0.85
+      }
+    },
+    {
+      "content": "HTTP caching strategies include browser caching, proxy caching, and CDN caching. Each layer helps reduce latency and server load.",
+      "metadata": {
+        "file_path": "Web Performance Notes.md",
+        "local_folder_name": "Notes",
+        "local_folder_id": "folder_abc123",
+        "chunk_index": 1,
+        "start_byte": "256",
+        "source_type": "markdown",
+        "score": 0.72
+      }
+    },
+    {
+      "content": "DNS resolution can be optimized by using CDN providers who have distributed DNS servers across multiple regions.",
+      "metadata": {
+        "file_path": "CSCI-UA.0480-062 Computer Networks.md",
+        "local_folder_name": "Notes",
+        "local_folder_id": "folder_abc123",
+        "chunk_index": 7,
+        "start_byte": "2048",
+        "source_type": "markdown",
+        "score": 0.65
+      }
+    },
+    {
+      "content": "Project requirements include setting up a CDN for static assets to improve load times globally.",
+      "metadata": {
+        "file_path": "Q3 Goals.md",
+        "local_folder_name": "Work",
+        "local_folder_id": "folder_def456",
+        "chunk_index": 0,
+        "start_byte": "0",
+        "source_type": "markdown",
+        "score": 0.45
+      }
+    },
+    {
+      "content": "Load balancing distributes traffic across multiple servers. This is different from CDN which focuses on content delivery.",
+      "metadata": {
+        "file_path": "Infrastructure Overview.md",
+        "local_folder_name": "Work",
+        "local_folder_id": "folder_def456",
+        "chunk_index": 2,
+        "start_byte": "512",
+        "source_type": "markdown",
+        "score": 0.33
+      }
+    },
+    {
+      "content": "Networking basics include understanding protocols, routing, and data transmission.",
+      "metadata": {
+        "file_path": "Random Thoughts.md",
+        "local_folder_name": "Notes",
+        "local_folder_id": "folder_abc123",
+        "chunk_index": 0,
+        "start_byte": "0",
+        "source_type": "markdown",
+        "score": 0.25
+      }
+    }
+  ],
+  "follow_up_questions": [
+    "What are the benefits of using a CDN?",
+    "How does CDN caching work?"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "sources": [
+    {
+      "id": "folder_abc123",
+      "name": "Notes",
+      "path": "/home/user/Documents/Notes",
+      "type": "folder",
+      "status": "synced"
+    },
+    {
+      "id": "folder_def456",
+      "name": "Work",
+      "path": "/home/user/Documents/Work",
+      "type": "folder",
+      "status": "syncing"
+    },
+    {
+      "id": "folder_ghi789",
+      "name": "Research",
+      "path": "/home/user/Documents/Research",
+      "type": "folder",
+      "status": "synced"
+    },
+    {
+      "id": "repo_xyz999",
+      "name": "my-project",
+      "path": "https://github.com/user/my-project",
+      "type": "repository",
+      "status": "synced"
+    }
+  ]
+}

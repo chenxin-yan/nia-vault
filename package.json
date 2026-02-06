@@ -13,6 +13,8 @@
     "build": "bun build ./src/index.ts --outdir ./dist --target node --format esm",
     "dev": "bun run ./src/index.ts",
     "test": "bun test",
+    "test:unit": "bun test --test-name-pattern \"^(?!.*\\[integration\\])\"",
+    "test:integration": "bun test --test-name-pattern \"\\[integration\\]\"",
     "changeset": "changeset",
     "changeset:add": "changeset add",
     "version": "changeset version",
