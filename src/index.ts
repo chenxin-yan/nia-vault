@@ -7,6 +7,7 @@ import { findCommand } from "./commands/find.js";
 import { foldersCommand } from "./commands/folders.js";
 import { initCommand } from "./commands/init.js";
 import { syncCommand } from "./commands/sync.js";
+import { checkForUpdate, setInstalledVersion } from "./lib/update-check.js";
 
 // CLI flags for ask command
 export interface AskFlags {
@@ -91,6 +92,13 @@ const cli = meow(
 );
 
 async function main(): Promise<void> {
+  // Set up update check (fire-and-forget, never blocks)
+  const pkgVersion = (cli.pkg as { version?: string })?.version;
+  if (pkgVersion) {
+    setInstalledVersion(pkgVersion);
+    checkForUpdate();
+  }
+
   const [command, ...args] = cli.input;
 
   if (!command || cli.flags.help) {
