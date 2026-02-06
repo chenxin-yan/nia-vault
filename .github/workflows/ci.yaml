@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
@@ -44,5 +44,8 @@ jobs:
       - name: Type Check
         run: bun check:types
 
-      - name: build
+      - name: Build
         run: bun run build
+
+      - name: Run tests
+        run: bun test

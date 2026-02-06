@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import meow from "meow";
+// Import version from package.json - this is bundled at compile time
+import pkg from "../package.json" with { type: "json" };
 import { askCommand } from "./commands/ask.js";
 import { configCommand, configResetCommand } from "./commands/config.js";
 import { findCommand } from "./commands/find.js";
@@ -17,6 +19,8 @@ export interface AskFlags {
   noStream?: boolean;
   plain?: boolean;
 }
+
+const VERSION = pkg.version;
 
 const cli = meow(
   `
@@ -54,6 +58,7 @@ const cli = meow(
 `,
   {
     importMeta: import.meta,
+    version: VERSION,
     flags: {
       folder: {
         type: "string",
@@ -93,11 +98,8 @@ const cli = meow(
 
 async function main(): Promise<void> {
   // Set up update check (fire-and-forget, never blocks)
-  const pkgVersion = (cli.pkg as { version?: string })?.version;
-  if (pkgVersion) {
-    setInstalledVersion(pkgVersion);
-    checkForUpdate();
-  }
+  setInstalledVersion(VERSION);
+  checkForUpdate();
 
   const [command, ...args] = cli.input;
 
