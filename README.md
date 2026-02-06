@@ -12,7 +12,7 @@ A CLI application for querying your local notes and files using AI-powered seman
 ## Prerequisites
 
 - Node.js >= 18.0.0 or Bun
-- [nia-sync](https://docs.trynia.ai/local-sync) installed and configured
+- [nia-sync](https://docs.trynia.ai/local-sync) >= 2.0.0 installed and configured
 
 ```bash
 # Install nia-sync
